@@ -8,141 +8,135 @@
         href="https://talentia.group/wp-content/uploads/2022/09/cropped-favicon-192x192.png"/>
   <style>
     /* ───── layout & reset ───── */
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body { height: 100%; }
+    * { box-sizing: border-box; margin:0; padding:0 }
+    html, body { height:100% }
     body {
-      display: flex;
-      flex-direction: column;
+      display: flex; flex-direction: column;
       background: radial-gradient(#000d3b,#000021);
-      font-family: 'Segoe UI', Tahoma, sans-serif;
-      color: #fff;
-    }
-    /* hide header in analytics mode */
-    body.analytics-view .title-bar {
-      display: none;
+      font-family:'Segoe UI',Tahoma,sans-serif;
+      color:#fff;
     }
 
-    /* ───── title bar ───── */
+    /* ───── view=analytics hides header ───── */
+    body.analytics-view .title-bar { display: none }
+
+    /* ───── title-bar ───── */
     .title-bar {
-      background: #000d3b;
-      padding: 0.5rem 1.5rem;
-      border-bottom: 2px solid #f5ed40ff;
-      flex: 0 0 auto;
+      flex:0 0 auto;
+      background:#000d3b;
+      padding:.5rem 1.5rem;
+      border-bottom:2px solid #f5ed40ff;
     }
     .title-bar h1 {
-      font-family: Oxygen-bold, Arial, sans-serif;
-      font-size: 2vw;
-      color: #fff;
-      text-shadow: 2px 2px 8px #000;
+      font-family:Oxygen-bold,Arial,sans-serif;
+      font-size:2vw;
+      text-shadow:2px 2px 8px #000;
     }
 
-    /* ───── main content ───── */
+    /* ───── main-content ───── */
     .main-content {
-      flex: 1 1 auto;
-      display: flex;
-      overflow: hidden;
+      flex:1 1 auto;
+      display:flex;
+      overflow:hidden;
     }
 
-    /* ───── table wrapper ───── */
+    /* ───── table flex container ───── */
     .table-container {
-      flex: 7;
-      display: flex;
-      flex-direction: column;
+      flex:7;
+      display:flex;
+      flex-direction:column;
     }
     table {
-      width: 100%;
-      border-collapse: collapse;
-      display: flex;
-      flex-direction: column;
-      height: 100%;
+      width:100%;
+      border-collapse:collapse;
+      display:flex;
+      flex-direction:column;
+      height:100%;
     }
-    table thead {
-      flex: 0 0 auto;
+    thead {
+      flex:0 0 auto;
     }
-    table thead tr {
-      display: flex;
-      background: #001a70;
+    thead tr {
+      display:flex;
+      background:#001a70;
     }
-    table thead th {
-      flex: 1;
-      padding: 0.5rem;
-      color: #f5ed40ff;
-      font-weight: 700;
-      text-transform: uppercase;
-      font-size: 1.2rem;
-      text-align: left;
+    thead th {
+      flex:1;
+      padding:.5rem;
+      color:#f5ed40ff;
+      font-weight:700;
+      text-transform:uppercase;
+      font-size:1.2rem;
+      text-align:left;
     }
-    table thead th:first-child { flex: 0 0 3rem; }
+    thead th:first-child { flex:0 0 3rem }
 
-    table tbody {
-      flex: 1 1 auto;
-      display: flex;
-      flex-direction: column;
+    tbody {
+      flex:1 1 auto;
+      display:flex;
+      flex-direction:column;
     }
-    table tbody tr {
-      flex: 1;
-      display: flex;
-      background: #001245;
-      border-bottom: 1px solid #1a1a1a;
+    tbody tr {
+      flex:1;
+      display:flex;
+      background:#001245;
+      border-bottom:1px solid #1a1a1a;
     }
-    table tbody tr.highlight {
-      background: #f5ed40ff;
-      color: #000;
-      font-weight: bold;
+    tbody tr.highlight {
+      background:#f5ed40ff;
+      color:#000;
+      font-weight:bold;
     }
-    table tbody td {
-      flex: 1;
-      padding: 0 0.5rem;
-      display: flex;
-      align-items: center;
+    tbody td {
+      flex:1;
+      padding:0 .5rem;
+      display:flex;
+      align-items:center;
     }
-    table tbody td:first-child { flex: 0 0 3rem; }
+    tbody td:first-child { flex:0 0 3rem }
 
     /* ───── sidebar ───── */
     .sidebar {
-      flex: 3;
-      padding: 1rem;
-      text-align: center;
-      overflow: hidden;
+      flex:3;
+      padding:1rem;
+      text-align:center;
+      overflow:hidden;
     }
     .sidebar img {
-      border-radius: 12px;
-      width: 100%;
-      max-width: 200px;
-      aspect-ratio: 1/1;
-      object-fit: cover;
-      margin-bottom: 1rem;
+      border-radius:12px;
+      max-width:200px;
+      width:100%;
+      aspect-ratio:1/1;
+      object-fit:cover;
+      margin-bottom:1rem;
     }
     .sidebar h2 {
-      font-size: 1.6rem;
-      color: #f5ed40ff;
-      margin-bottom: 0.5rem;
+      font-size:1.6rem;
+      color:#f5ed40ff;
+      margin-bottom:.5rem;
     }
     .sidebar .stat {
-      font-size: 1.3rem;
-      margin-top: 0.5rem;
+      font-size:1.3rem;
+      margin-top:.5rem;
     }
     .sidebar .stat span {
-      display: block;
-      font-size: 2.4rem;
-      color: #f5ed40ff;
+      display:block;
+      font-size:2.4rem;
+      color:#f5ed40ff;
     }
 
     /* ───── empty state ───── */
     .empty-message {
-      text-align: center;
-      padding: 1rem;
-      font-size: 1.4rem;
-      color: #f5ed40ff;
+      text-align:center;
+      padding:1rem;
+      font-size:1.4rem;
+      color:#f5ed40ff;
     }
 
-    /* ───── Sales view overrides ───── */
+    /* ───── sales-view doubling ───── */
     .sales-view table thead th,
     .sales-view table tbody td {
-      font-size: 2.6rem !important;
-    }
-    .sales-view table tbody tr {
-      /* each row is still 1/10th of body; flex handles height */
+      font-size:2.6rem !important;
     }
   </style>
 </head>
@@ -163,7 +157,6 @@
         <tbody></tbody>
       </table>
     </div>
-
     <div class="sidebar" id="topPerformerSidebar" style="display:none">
       <h2 id="topName"></h2>
       <img id="topPhoto" src="" alt="">
@@ -177,53 +170,54 @@
   </div>
 
   <script>
-    const callSummaryUrl = "https://umfyxaaumhgkovwuovzl.supabase.co/functions/v1/8x8-Call-Summaries";
-    const lookupUrl      = "https://umfyxaaumhgkovwuovzl.supabase.co/functions/v1/8x8-Employee-Join";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVtZnl4YWF1bWhna292d3VvdnpsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzU5MDQ5NTYsImV4cCI6MjA1MTQ4MDk1Nn0.mesbr7DPkdt9Xdq0wa2CNUgfZfDScb2KdX6vvzoUi8I";
-    const FALLBACK_PHOTO = "https://docs.google.com/drawings/d/e/2PACX-1vT_8sRZLulgLi8vByqho1d1U0dP7d-wvNZ_0TC2zPpfQHk4vPTOZ4HHruVyGxKYAUqEY780Spopi7Cb/pub?w=1440&h=1080";
-    const PAGE_SIZE = 20, HIGHLIGHT_MS = 2000, REFRESH_MS = 60000;
+    const SUMMARY_URL = "https://umfyxaaumhgkovwuovzl.supabase.co/functions/v1/8x8-Call-Summaries";
+    const JOIN_URL    = "https://umfyxaaumhgkovwuovzl.supabase.co/functions/v1/8x8-Employee-Join";
+    const KEY         = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh..."; // your anon key
+    const FALLBACK    = "https://docs.google.com/drawings/d/e/2PACX-1vT_8...";
 
+    const HIGHLIGHT_MS = 2000, REFRESH_MS = 60000;
+    let PAGE_SIZE = 20;
     let highlightTimer, refreshTimer;
     let currentPage = 0, highlightIndex = 0;
 
-    function formatTalkTime(s) {
+    function fmtTalk(s) {
       const m = Math.floor(s/60);
       return `${Math.floor(m/60)}:${(m%60).toString().padStart(2,'0')}`;
     }
-    function formatDateTime(d) {
+    function fmtDate(d) {
       return d.toISOString().slice(0,19).replace("T"," ");
     }
 
     function getFilters() {
       const p = new URLSearchParams(location.search), f = {};
       f.includeAll    = (p.get("include")||"").toLowerCase()==="all";
-      f.department    = p.has("Sales") ? "Sales" : p.get("Department") || null;
-      f.location      = p.get("Location") || null;
+      f.department    = p.has("Sales") ? "Sales" : p.get("Department")||null;
+      f.location      = p.get("Location")||null;
       f.viewAnalytics = (p.get("view")||"").toLowerCase()==="analytics";
-      // toggle analytics-view class
+      // toggle body classes
       document.body.classList.toggle("analytics-view", f.viewAnalytics);
-      // toggle sales-view class
       document.body.classList.toggle("sales-view", f.department==="Sales");
+      // set page size
+      PAGE_SIZE = f.viewAnalytics ? 10 : 20;
       return f;
     }
 
     async function fetchSummaries(includeAll) {
       const now = new Date(), s = new Date(now), e = new Date(now);
       s.setHours(7,0,0,0); e.setHours(18,0,0,0);
-      const body = {
-        startTime:   formatDateTime(s),
-        endTime:     formatDateTime(e),
-        timeZone:    "Europe/London",
-        minTalkTime: includeAll?0:1,
-        fields:      ["FirstName","LastName","External_Outbound_Total","Total_Talk_Time","Email"]
-      };
-      const res = await fetch(callSummaryUrl, {
+      const res = await fetch(SUMMARY_URL, {
         method:"POST",
         headers:{
           "Content-Type":"application/json",
-          "Authorization":`Bearer ${SUPABASE_ANON_KEY}`
+          "Authorization":`Bearer ${KEY}`
         },
-        body:JSON.stringify(body)
+        body: JSON.stringify({
+          startTime: fmtDate(s),
+          endTime:   fmtDate(e),
+          timeZone:  "Europe/London",
+          minTalkTime: includeAll?0:1,
+          fields:["FirstName","LastName","External_Outbound_Total","Total_Talk_Time","Email"]
+        })
       });
       const json = await res.json();
       if(!Array.isArray(json)) return [];
@@ -235,42 +229,42 @@
           dials: +o.External_Outbound_Total,
           talkTime: Math.round(+o.Total_Talk_Time/1000)
         }))
-        .filter(r=> includeAll ? true : r.talkTime>0);
+        .filter(r=> includeAll? true : r.talkTime>0);
     }
 
     async function fetchDetails(emails) {
       const uniq = [...new Set(emails)];
       if(!uniq.length) return [];
-      const res = await fetch(lookupUrl, {
+      const res = await fetch(JOIN_URL, {
         method:"POST",
         headers:{
           "Content-Type":"application/json",
-          "Authorization":`Bearer ${SUPABASE_ANON_KEY}`
+          "Authorization":`Bearer ${KEY}`
         },
-        body:JSON.stringify({emails:uniq})
+        body: JSON.stringify({ emails: uniq })
       });
       const json = await res.json();
-      return Array.isArray(json)?json:[];
+      return Array.isArray(json)? json : [];
     }
 
     function updateSidebar(row, detail) {
       if(!row) return;
       document.getElementById("topPerformerSidebar").style.display = "block";
-      document.getElementById("topName").textContent = row.name;
-      document.getElementById("topDials").textContent = row.dials;
-      document.getElementById("topTalkTime").textContent = formatTalkTime(row.talkTime);
-      const img = document.getElementById("topPhoto");
-      const src = detail?.bamboo_photo_url || FALLBACK_PHOTO;
+      document.getElementById("topName").textContent   = row.name;
+      document.getElementById("topDials").textContent  = row.dials;
+      document.getElementById("topTalkTime").textContent = fmtTalk(row.talkTime);
+      const img = document.getElementById("topPhoto"),
+            src = detail?.bamboo_photo_url || FALLBACK;
       if(img.src !== src) img.src = src;
     }
 
-    function render(rows, detailsMap) {
+    function render(rows, map) {
       clearInterval(highlightTimer);
       const tbody = document.querySelector("#callSummaryTable tbody");
       tbody.innerHTML = "";
-      const start = currentPage * PAGE_SIZE;
-      const slice = rows.slice(start, start + PAGE_SIZE);
-      highlightIndex %= slice.length || 1;
+      const start = currentPage * PAGE_SIZE,
+            slice = rows.slice(start, start + PAGE_SIZE);
+      highlightIndex %= slice.length||1;
       slice.forEach((r,i)=>{
         const tr = document.createElement("tr");
         if(i===highlightIndex) tr.classList.add("highlight");
@@ -278,17 +272,17 @@
           <td>${r.rank}</td>
           <td>${r.name}</td>
           <td>${r.dials}</td>
-          <td>${formatTalkTime(r.talkTime)}</td>`;
+          <td>${fmtTalk(r.talkTime)}</td>`;
         tbody.appendChild(tr);
       });
-      updateSidebar(slice[highlightIndex], detailsMap[slice[highlightIndex]?.email]);
+      updateSidebar(slice[highlightIndex], map[slice[highlightIndex]?.email]);
       highlightTimer = setInterval(()=>{
         highlightIndex++;
         if(highlightIndex >= slice.length) {
           highlightIndex = 0;
           currentPage = (currentPage+1) % Math.ceil(rows.length/PAGE_SIZE);
         }
-        render(rows, detailsMap);
+        render(rows,map);
       }, HIGHLIGHT_MS);
     }
 
@@ -297,13 +291,13 @@
       const f = getFilters();
       const callRows = await fetchSummaries(f.includeAll);
       const details  = await fetchDetails(callRows.map(r=>r.email));
-      const detailsMap = Object.fromEntries(details.map(d=>[d.work_email.toLowerCase(),d]));
+      const map      = Object.fromEntries(details.map(d=>[d.work_email.toLowerCase(),d]));
 
       const filtered = callRows
         .filter(r=>{
-          const d = detailsMap[r.email]||{};
+          const d=map[r.email]||{};
           if(f.location && d.location!==f.location) return false;
-          if(f.department) {
+          if(f.department){
             if(f.department==="Sales")
               return /\(.*\)/.test(d.department||"");
             return (d.department||"").toLowerCase().includes(f.department.toLowerCase());
@@ -314,11 +308,12 @@
         .map((r,i)=>({...r,rank:i+1}));
 
       if(!filtered.length) {
-        document.getElementById("emptyState").style.display = "block";
+        document.getElementById("emptyState").style.display="block";
       } else {
-        currentPage = highlightIndex = 0;
-        render(filtered, detailsMap);
+        currentPage=highlightIndex=0;
+        render(filtered,map);
       }
+
       refreshTimer = setTimeout(init, REFRESH_MS);
     }
 
