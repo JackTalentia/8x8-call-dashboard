@@ -1,295 +1,278 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Call Time</title>
-  <link rel="icon" href="https://talentia.group/wp-content/uploads/2022/09/cropped-favicon-192x192.png"/>
   <style>
-    * { box-sizing: border-box; margin:0; padding:0 }
-    html, body { height: 100% }
     body {
-      display: flex;
-      flex-direction: column;
+      margin: 0;
       background: radial-gradient(#000d3b, #000021);
       font-family: 'Segoe UI', Tahoma, sans-serif;
-      color: #fff;
+      color: white;
+      padding: 0;
     }
+
     .title-bar {
-      flex: 0 0 auto;
-      background: #000d3b;
-      padding: 0.5rem 1.5rem;
+      background-color: #000d3b;
+      padding: 0.5rem 2rem;
+      display: flex;
+      align-items: flex-end;
+      height: 6vh;
       border-bottom: 2px solid #f5ed40ff;
     }
+
     .title-bar h1 {
       font-family: Oxygen-bold, Arial, sans-serif;
       font-size: 2vw;
-      text-shadow: 2px 2px 8px #000;
+      color: white;
+      text-shadow: 2px 2px 8px black;
+      text-rendering: optimizelegibility;
+      text-transform: none;
+      line-height: 1;
+      font-weight: bold;
+      margin: 0;
     }
-    .main-content {
-      flex: 1 1 auto;
-      display: flex;
-      overflow: hidden;
-    }
-    .table-container {
-      flex: 7;
-      display: flex;
-      flex-direction: column;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      display: flex;
-      flex-direction: column;
-      height: 100%;
-    }
-    thead {
-      flex: 0 0 auto;
-    }
-    thead tr {
-      display: flex;
-      background: #001a70;
-    }
-    thead th {
-      padding: 0.5rem;
-      color: #f5ed40ff;
-      font-weight: 700;
-      text-transform: uppercase;
-      font-size: 1.2rem;
-      text-align: left;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-    /* flex ratios: rank small, name larger, then dials/talk */
-    thead th:nth-child(1) { flex: 0 0 3rem }
-    thead th:nth-child(2) { flex: 3 }
-    thead th:nth-child(3),
-    thead th:nth-child(4) { flex: 1 }
 
-    tbody {
-      flex: 1 1 auto;
+    .main-content {
       display: flex;
-      flex-direction: column;
+      padding: 2rem;
     }
-    tbody tr {
-      flex: 1;
-      display: flex;
-      background: #001245;
-      border-bottom: 1px solid #1a1a1a;
+
+    table {
+      width: 70%;
+      border-collapse: collapse;
+      font-size: 1.4rem;
     }
-    tbody tr.highlight {
-      background: #f5ed40ff;
-      color: #000;
+
+    th, td {
+      padding: 0.9rem 1.2rem;
+      text-align: left;
+    }
+
+    th {
+      background-color: #001a70;
+      color: #f5ed40ff;
+      font-weight: 800;
+      text-transform: uppercase;
+      font-size: 1.3rem;
+    }
+
+    tr {
+      background-color: #001245;
+      border-bottom: 2px solid #1a1a1a;
+    }
+
+    tr.highlight {
+      background-color: #f5ed40ff;
+      color: black;
       font-weight: bold;
     }
-    tbody td {
-      padding: 0 0.5rem;
-      display: flex;
-      align-items: center;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-    tbody td:nth-child(1) { flex: 0 0 3rem }
-    tbody td:nth-child(2) { flex: 3 }
-    tbody td:nth-child(3),
-    tbody td:nth-child(4) { flex: 1 }
 
-    .sidebar {
-      flex: 3;
-      padding: 1rem;
-      text-align: center;
-      overflow: hidden;
+    td {
+      font-weight: 600;
     }
-    .sidebar img {
-      border-radius: 12px;
-      max-width: 200px;
-      width: 100%;
-      aspect-ratio: 1/1;
-      object-fit: cover;
-      margin-bottom: 1rem;
-    }
-    .sidebar h2 {
-      font-size: 1.6rem;
-      color: #f5ed40ff;
-      margin-bottom: 0.5rem;
-    }
-    .sidebar .stat {
-      font-size: 1.3rem;
-      margin-top: 0.5rem;
-    }
-    .sidebar .stat span {
-      display: block;
-      font-size: 2.4rem;
-      color: #f5ed40ff;
+
+    th:first-child, td:first-child {
+      width: 3.2rem;
     }
 
     .empty-message {
       text-align: center;
-      padding: 1rem;
-      font-size: 1.4rem;
+      margin-top: 2rem;
+      font-size: 1.5rem;
+      color: #f5ed40ff;
+    }
+
+    .sidebar {
+      width: 30%;
+      padding-left: 2rem;
+      text-align: center;
+    }
+
+    .sidebar img {
+      border-radius: 12px;
+      max-width: 200px;
+      margin: 1rem 0;
+    }
+
+    .sidebar h2 {
+      font-size: 1.8rem;
+      color: #f5ed40ff;
+      margin-bottom: 1rem;
+    }
+
+    .sidebar .stat {
+      font-size: 1.5rem;
+      margin-top: 1rem;
+    }
+
+    .sidebar .stat span {
+      display: block;
+      font-size: 3rem;
       color: #f5ed40ff;
     }
   </style>
 </head>
 <body>
-  <div class="title-bar"><h1>Call Time</h1></div>
-
+  <div class="title-bar">
+    <h1>Call Time</h1>
+  </div>
   <div class="main-content">
-    <div class="table-container">
-      <table id="callSummaryTable">
-        <thead>
-          <tr>
-            <th>Rank</th>
-            <th>Name</th>
-            <th>Dials</th>
-            <th>Talk Time</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-    </div>
-    <div class="sidebar" id="topPerformerSidebar" style="display:none">
+    <table id="callSummaryTable">
+      <thead>
+        <tr>
+          <th>Rank</th>
+          <th>Name</th>
+          <th>Dials</th>
+          <th>Talk Time</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+    <div class="sidebar" id="topPerformerSidebar" style="display: none;">
       <h2 id="topName"></h2>
-      <img id="topPhoto" src="" alt="">
-      <div class="stat">Dials<span id="topDials">0</span></div>
-      <div class="stat">Talk Time<span id="topTalkTime">0:00</span></div>
+      <img id="topPhoto" src="" alt="Top Performer">
+      <div class="stat">
+        Total Interviews MTD
+        <span>8</span>
+      </div>
+      <div class="stat">
+        Total CVs Sent MTD
+        <span>32</span>
+      </div>
     </div>
   </div>
-
-  <div class="empty-message" id="emptyState" style="display:none">
+  <div class="empty-message" id="emptyState" style="display: none;">
     No data available for today.
   </div>
 
   <script>
-    const SUMMARY_URL = "https://umfyxaaumhgkovwuovzl.supabase.co/functions/v1/8x8-Call-Summaries";
-    const JOIN_URL    = "https://umfyxaaumhgkovwuovzl.supabase.co/functions/v1/8x8-Employee-Join";
-    const KEY         = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVtZnl4YWF1bWhna292d3VvdnpsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzU5MDQ5NTYsImV4cCI6MjA1MTQ4MDk1Nn0.mesbr7DPkdt9Xdq0wa2CNUgfZfDScb2KdX6vvzoUi8I";
-    const FALLBACK    = "https://docs.google.com/drawings/…/pub?w=1440&h=1080";
+    const callSummaryUrl = "https://umfyxaaumhgkovwuovzl.supabase.co/functions/v1/8x8-Call-Summaries";
+    const lookupUrl = "https://umfyxaaumhgkovwuovzl.supabase.co/functions/v1/lookup-employee-details";
+    const SUPABASE_ANON_KEY = "YOUR_KEY_HERE";
+    const PAGE_SIZE = 10;
+    let data = [], employeeDetails = [];
 
-    const PAGE_SIZE   = 10,
-          HIGHLIGHT_MS = 2000,
-          REFRESH_MS   = 60000;
-
-    let highlightTimer, refreshTimer;
-    let currentPage = 0, highlightIndex = 0;
-
-    function fmtTalk(s) {
-      const m = Math.floor(s/60);
-      return `${Math.floor(m/60)}:${(m%60).toString().padStart(2,'0')}`;
-    }
-    function fmtDate(d) {
-      return d.toISOString().slice(0,19).replace("T"," ");
+    function getFiltersFromUrl() {
+      const params = new URLSearchParams(window.location.search);
+      const filters = {};
+      if (params.has('Sales')) filters.department = 'Sales';
+      if (params.has('Location')) filters.location = params.get('Location');
+      if (params.has('Department')) filters.department = params.get('Department');
+      return filters;
     }
 
-    async function fetchSummaries(includeAll=false) {
-      const now = new Date(), s = new Date(now), e = new Date(now);
-      s.setHours(7,0,0,0); e.setHours(18,0,0,0);
-      const res = await fetch(SUMMARY_URL, {
-        method:"POST",
-        headers:{
-          "Content-Type":"application/json",
-          "Authorization": `Bearer ${KEY}`
+    function formatDateTime(date) {
+      return date.toISOString().slice(0, 19).replace("T", " ");
+    }
+
+    function formatTalkTime(seconds) {
+      const totalMinutes = Math.floor(seconds / 60);
+      const hours = Math.floor(totalMinutes / 60);
+      const minutes = totalMinutes % 60;
+      return `${hours}:${minutes.toString().padStart(2, '0')}`;
+    }
+
+    async function fetchCallSummaries() {
+      const now = new Date();
+      const start = new Date(now);
+      start.setHours(7, 0, 0, 0);
+      const end = new Date(now);
+      end.setHours(18, 0, 0, 0);
+
+      const body = {
+        startTime: formatDateTime(start),
+        endTime: formatDateTime(end),
+        timeZone: "Europe/London",
+        minTalkTime: 1,
+        fields: ["FirstName", "LastName", "External_Outbound_Total", "Total_Talk_Time", "Email"]
+      };
+
+      const res = await fetch(callSummaryUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
         },
-        body: JSON.stringify({
-          startTime:  fmtDate(s),
-          endTime:    fmtDate(e),
-          timeZone:   "Europe/London",
-          minTalkTime: includeAll ? 0 : 1,
-          fields:     ["FirstName","LastName","External_Outbound_Total","Total_Talk_Time","Email"]
-        })
+        body: JSON.stringify(body)
       });
+
       const json = await res.json();
-      if (!Array.isArray(json)) return [];
       return json
-        .filter(o=>o.Email)
-        .map(o=>({
-          name: `${o.FirstName||""} ${o.LastName||""}`.trim(),
-          email: o.Email.toLowerCase(),
-          dials: +o.External_Outbound_Total,
-          talkTime: Math.round(+o.Total_Talk_Time/1000)
+        .map((entry) => ({
+          name: `${entry.FirstName} ${entry.LastName}`,
+          email: entry.Email?.toLowerCase() || '',
+          dials: entry.External_Outbound_Total,
+          talkTime: Math.round(Number(entry.Total_Talk_Time) / 1000)
         }))
-        .filter(r=> includeAll ? true : r.talkTime > 0);
+        .filter(e => e.talkTime > 0);
     }
 
-    async function fetchDetails(emails) {
-      const uniq = [...new Set(emails)];
-      if (!uniq.length) return [];
-      const res = await fetch(JOIN_URL, {
-        method:"POST",
-        headers:{
-          "Content-Type":"application/json",
-          "Authorization": `Bearer ${KEY}`
+    async function fetchEmployeeDetails(emails) {
+      const res = await fetch(lookupUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
         },
-        body: JSON.stringify({ emails: uniq })
+        body: JSON.stringify({ emails })
       });
-      const json = await res.json();
-      return Array.isArray(json) ? json : [];
+      return await res.json();
     }
 
-    function updateSidebar(row, detail) {
-      if (!row) return;
-      document.getElementById("topPerformerSidebar").style.display = "block";
-      document.getElementById("topName").textContent    = row.name;
-      document.getElementById("topDials").textContent   = row.dials;
-      document.getElementById("topTalkTime").textContent= fmtTalk(row.talkTime);
-      const img = document.getElementById("topPhoto"),
-            src = detail?.bamboo_photo_url || FALLBACK;
-      if (img.src !== src) img.src = src;
+    function applyFilters(data, detailsMap, filters) {
+      return data.filter(item => {
+        const detail = detailsMap[item.email];
+        if (!detail) return false;
+        if (filters.location && detail.locations?.name !== filters.location) return false;
+        if (filters.department && !detail.department?.includes(filters.department)) return false;
+        if (filters.department === 'Sales' && !/\(.*\)/.test(detail.department || '')) return false;
+        return true;
+      });
     }
 
-    function render(rows, map) {
-      clearInterval(highlightTimer);
-      const tbody = document.querySelector("#callSummaryTable tbody");
-      tbody.innerHTML = "";
-      const start = currentPage * PAGE_SIZE;
-      const slice = rows.slice(start, start + PAGE_SIZE);
-      highlightIndex %= slice.length || 1;
+    function renderPage(pagedData) {
+      const tableBody = document.querySelector('#callSummaryTable tbody');
+      tableBody.innerHTML = "";
 
-      slice.forEach((r,i) => {
-        const tr = document.createElement("tr");
-        if (i === highlightIndex) tr.classList.add("highlight");
+      pagedData.forEach((item, i) => {
+        const tr = document.createElement('tr');
+        if (i === 0) tr.classList.add('highlight');
         tr.innerHTML = `
-          <td>${r.rank}</td>
-          <td>${r.name}</td>
-          <td>${r.dials}</td>
-          <td>${fmtTalk(r.talkTime)}</td>`;
-        tbody.appendChild(tr);
+          <td>${item.rank}</td>
+          <td>${item.name}</td>
+          <td>${item.dials}</td>
+          <td>${formatTalkTime(item.talkTime)}</td>
+        `;
+        tableBody.appendChild(tr);
       });
+    }
 
-      updateSidebar(slice[highlightIndex], map[slice[highlightIndex]?.email]);
-
-      highlightTimer = setInterval(()=>{
-        highlightIndex++;
-        if (highlightIndex >= slice.length) {
-          highlightIndex = 0;
-          currentPage = (currentPage + 1) % Math.ceil(rows.length / PAGE_SIZE);
-        }
-        render(rows, map);
-      }, HIGHLIGHT_MS);
+    function showTopPerformer(top, details) {
+      const sidebar = document.getElementById('topPerformerSidebar');
+      sidebar.style.display = 'block';
+      document.getElementById('topName').textContent = top.name;
+      document.getElementById('topPhoto').src = details?.bamboo_photo_url || '';
     }
 
     async function init() {
-      clearTimeout(refreshTimer);
-
-      // Always treat includeAll = false; remove any view logic
-      const callRows = await fetchSummaries(false);
-      const details  = await fetchDetails(callRows.map(r=>r.email));
-      const map      = Object.fromEntries(details.map(d=>[d.work_email.toLowerCase(), d]));
-
-      const filtered = callRows
-        .sort((a,b)=> b.talkTime - a.talkTime)
-        .map((r,i)=> ({ ...r, rank: i+1 }));
+      const rawData = await fetchCallSummaries();
+      const emails = rawData.map(d => d.email);
+      const employeeData = await fetchEmployeeDetails(emails);
+      const detailsMap = Object.fromEntries(employeeData.map(d => [d.work_email?.toLowerCase(), d]));
+      const filters = getFiltersFromUrl();
+      const filtered = applyFilters(rawData, detailsMap, filters)
+        .sort((a, b) => b.talkTime - a.talkTime)
+        .map((entry, i) => ({ ...entry, rank: i + 1 }));
 
       if (filtered.length === 0) {
         document.getElementById("emptyState").style.display = "block";
-      } else {
-        currentPage = highlightIndex = 0;
-        render(filtered, map);
+        return;
       }
 
-      refreshTimer = setTimeout(init, REFRESH_MS);
+      renderPage(filtered);
+      showTopPerformer(filtered[0], detailsMap[filtered[0].email]);
     }
 
     init();
