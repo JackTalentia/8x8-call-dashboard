@@ -93,16 +93,18 @@
     }
 
     async function fetchCallSummaries() {
-      const today = new Date();
-      const start = new Date(today);
-      start.setHours(7, 0, 0, 0); // 07:00:00
-      const end = new Date(today);
-      end.setHours(18, 0, 0, 0); // 18:00:00
+      const now = new Date();
+      const start = new Date(now);
+      start.setHours(7, 0, 0, 0);
+      const end = new Date(now);
+      end.setHours(18, 0, 0, 0);
 
       const body = {
         startTime: formatDateTime(start),
         endTime: formatDateTime(end),
-        timeZone: "Europe/London"
+        timeZone: "Europe/London",
+        minTalkTime: 1,  // milliseconds
+        fields: ["FirstName", "LastName", "External_Outbound_Total", "Total_Talk_Time"]
       };
 
       try {
@@ -115,20 +117,19 @@
         });
 
         if (!res.ok) {
-          throw new Error("Failed to fetch: " + res.status);
+          throw new Error("HTTP " + res.status);
         }
 
         const json = await res.json();
 
         data = json
-          .filter(entry => Number(entry.Total_Talk_Time) > 0)
-          .sort((a, b) => b.Total_Talk_Time - a.Total_Talk_Time)
           .map((entry, index) => ({
             rank: index + 1,
             name: `${entry.FirstName} ${entry.LastName}`,
             dials: entry.External_Outbound_Total,
-            talkTime: Math.round(Number(entry.Total_Talk_Time) / 1000) // in seconds
-          }));
+            talkTime: Math.round(Number(entry.Total_Talk_Time) / 1000)  // in seconds
+          }))
+          .sort((a, b) => b.talkTime - a.talkTime);
 
         if (data.length === 0) {
           document.getElementById("emptyState").style.display = "block";
