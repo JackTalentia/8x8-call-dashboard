@@ -45,11 +45,12 @@
     tr {
       background-color: #001245;
       border-bottom: 2px solid #1a1a1a;
+      transition: background-color 0.3s, color 0.3s;
     }
 
     tr.highlight {
-      background-color: #f5ed40ff;
-      color: black;
+      background-color: #f5ed40ff !important;
+      color: black !important;
       font-weight: bold;
     }
 
@@ -62,16 +63,6 @@
       margin-top: 2rem;
       font-size: 1.5rem;
       color: #f5ed40ff;
-    }
-
-    pre#debugOutput {
-      background: #111;
-      color: #0f0;
-      padding: 1rem;
-      margin-top: 2rem;
-      font-size: 0.9rem;
-      white-space: pre-wrap;
-      border: 1px solid #333;
     }
   </style>
 </head>
@@ -91,17 +82,22 @@
   <div class="empty-message" id="emptyState" style="display: none;">
     No data available for today.
   </div>
-  <pre id="debugOutput" style="display:none;"></pre>
 
   <script>
     const API_URL = "https://umfyxaaumhgkovwuovzl.supabase.co/functions/v1/8x8-Call-Summaries";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVtZnl4YWF1bWhna292d3VvdnpsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzU5MDQ5NTYsImV4cCI6MjA1MTQ4MDk1Nn0.mesbr7DPkdt9Xdq0wa2CNUgfZfDScb2KdX6vvzoUi8I";
-    const PAGE_SIZE = 5;
+    const PAGE_SIZE = 10;
     let data = [];
     let page = 0;
 
     function formatDateTime(date) {
       return date.toISOString().slice(0, 19).replace("T", " ");
+    }
+
+    function formatTalkTime(seconds) {
+      const h = Math.floor(seconds / 3600);
+      const m = Math.floor((seconds % 3600) / 60);
+      return h > 0 ? `${h}h${m.toString().padStart(2, "0")}` : `${m}m`;
     }
 
     async function fetchCallSummaries() {
@@ -129,34 +125,24 @@
           body: JSON.stringify(body)
         });
 
-        const raw = await res.text();
-        const debug = document.getElementById("debugOutput");
-        debug.style.display = "block";
-        debug.textContent = `Raw response:\n${raw}`;
-
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
-        const json = JSON.parse(raw);
+        const json = await res.json();
 
         data = json
+          .filter(entry => entry.Total_Talk_Time > 0)
+          .sort((a, b) => b.Total_Talk_Time - a.Total_Talk_Time)
           .map((entry, index) => ({
             rank: index + 1,
             name: `${entry.FirstName} ${entry.LastName}`,
             dials: entry.External_Outbound_Total,
-            talkTime: Math.round(Number(entry.Total_Talk_Time) / 1000)
-          }))
-          .sort((a, b) => b.talkTime - a.talkTime);
+            talkTime: Math.round(entry.Total_Talk_Time / 1000)
+          }));
 
         if (data.length === 0) {
           document.getElementById("emptyState").style.display = "block";
           return;
         }
 
-        renderPage(0);
-        setInterval(() => {
-          page = (page + 1) % Math.ceil(data.length / PAGE_SIZE);
-          renderPage(page);
-        }, 5000);
+        renderScrollLoop();
       } catch (err) {
         console.error("❌ Fetch Error:", err);
         document.getElementById("emptyState").textContent = "Error loading data.";
@@ -164,25 +150,48 @@
       }
     }
 
-    function renderPage(p) {
-      const tableBody = document.querySelector('#callSummaryTable tbody');
-      tableBody.innerHTML = "";
+    function renderScrollLoop() {
+      const totalPages = Math.ceil(data.length / PAGE_SIZE);
+      let currentPage = 0;
 
-      const start = p * PAGE_SIZE;
-      const end = start + PAGE_SIZE;
-      const pageSlice = data.slice(start, end);
+      function showPage() {
+        const tableBody = document.querySelector('#callSummaryTable tbody');
+        tableBody.innerHTML = "";
 
-      pageSlice.forEach((item, i) => {
-        const tr = document.createElement('tr');
-        if (i === 0) tr.classList.add('highlight');
-        tr.innerHTML = `
-          <td>${item.rank}</td>
-          <td>${item.name}</td>
-          <td>${item.dials}</td>
-          <td>${item.talkTime}</td>
-        `;
-        tableBody.appendChild(tr);
-      });
+        const start = currentPage * PAGE_SIZE;
+        const pageSlice = data.slice(start, start + PAGE_SIZE);
+
+        pageSlice.forEach((item, i) => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td>${item.rank}</td>
+            <td>${item.name}</td>
+            <td>${item.dials}</td>
+            <td>${formatTalkTime(item.talkTime)}</td>
+          `;
+          tableBody.appendChild(tr);
+        });
+
+        // Scroll the highlight row down one by one
+        let i = 0;
+        const rows = tableBody.querySelectorAll("tr");
+        function highlightNext() {
+          rows.forEach(row => row.classList.remove("highlight"));
+          if (rows[i]) {
+            rows[i].classList.add("highlight");
+            i++;
+            if (i <= rows.length) {
+              setTimeout(highlightNext, 1000);
+            } else {
+              currentPage = (currentPage + 1) % totalPages;
+              setTimeout(showPage, 1000);
+            }
+          }
+        }
+        highlightNext();
+      }
+
+      showPage();
     }
 
     fetchCallSummaries();
