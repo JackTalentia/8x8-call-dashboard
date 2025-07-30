@@ -151,6 +151,8 @@
   </div>
 
   <script>
+    // Enable console diagnostics with ?debug
+    const DEBUG = new URLSearchParams(location.search).has('debug');
     const callSummaryUrl = "https://umfyxaaumhgkovwuovzl.supabase.co/functions/v1/8x8-Call-Summaries";
     const lookupUrl = "https://umfyxaaumhgkovwuovzl.supabase.co/functions/v1/8x8-Employee-Join";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVtZnl4YWF1bWhna292d3VvdnpsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzU5MDQ5NTYsImV4cCI6MjA1MTQ4MDk1Nn0.mesbr7DPkdt9Xdq0wa2CNUgfZfDScb2KdX6vvzoUi8I";
@@ -347,7 +349,7 @@
         lastPhotoCache[key] = FALLBACK_PHOTO;
         img.src = FALLBACK_PHOTO;
       }
-      document.getElementById('topDials'.textContent = String(row.dials ?? 0);
+      document.getElementById('topDials').textContent = String(row.dials ?? 0);
       document.getElementById('topTalkTime').textContent = formatTalkTime(row.talkTime ?? 0);
     }
 
@@ -363,6 +365,27 @@
       );
 
       const filters = getFiltersFromUrl();
+
+      if (DEBUG) {
+        const unmatched = emails.filter(e => !(e in detailsMap));
+        const hasBrackets = (s) => /\([^)]*\)/.test(s || '');
+        const withDetail = rawData.filter(r => detailsMap[r.email]);
+        const withSalesDept = withDetail.filter(r => hasBrackets(detailsMap[r.email]?.department));
+        const droppedNoSalesDept = withDetail
+          .filter(r => !hasBrackets(detailsMap[r.email]?.department))
+          .map(r => ({ email: r.email, dept: detailsMap[r.email]?.department }));
+        console.group('Debug');
+        console.log('rawData', rawData.length);
+        console.log('emails', emails.length);
+        console.log('employee rows', employeeDetails.length);
+        console.log('unmatched emails', unmatched.length, unmatched);
+        console.log('with employee detail', withDetail.length);
+        console.log('with sales-style dept (has brackets)', withSalesDept.length);
+        if (filters.department === 'Sales') {
+          console.log('dropped (has detail but not Sales dept)', droppedNoSalesDept);
+        }
+        console.groupEnd();
+      }
 
       const filtered = applyFilters(rawData, detailsMap, filters)
         .sort((a, b) => b.talkTime - a.talkTime)
