@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Call Time</title>
   <style>
     body {
@@ -10,30 +10,34 @@
       background: radial-gradient(#000d3b, #000021);
       font-family: 'Segoe UI', Tahoma, sans-serif;
       color: white;
-      padding: 2rem;
+      padding: 0;
     }
 
-    h1 {
+    .title-bar {
+      background-color: #000d3b;
+      padding: 0.5rem 2rem;
+      display: flex;
+      align-items: flex-end;
+      height: 6vh;
+      border-bottom: 2px solid #f5ed40ff;
+    }
+
+    .title-bar h1 {
+      font-family: Oxygen-bold, Arial, sans-serif;
+      font-size: 2vw;
       color: white;
-      font-size: 2.8rem;
+      text-shadow: 2px 2px 8px black;
+      text-rendering: optimizelegibility;
+      text-transform: none;
+      line-height: 1;
+      font-weight: bold;
       margin: 0;
-      font-weight: 800;
-      letter-spacing: 0.5px;
-      display: inline-block;
-      border-bottom: 4px solid #f5ed40ff;
-      padding-bottom: 0.25rem;
-    }
-
-    .header-wrapper {
-      text-align: center;
-      margin-bottom: 2rem;
     }
 
     table {
       width: 100%;
       border-collapse: collapse;
       font-size: 1.4rem;
-      table-layout: fixed;
     }
 
     th, td {
@@ -47,30 +51,25 @@
       font-weight: 800;
       text-transform: uppercase;
       font-size: 1.3rem;
-      border-bottom: 2px solid #f5ed40ff;
-    }
-
-    th:first-child, td:first-child {
-      width: 4rem;
-      text-align: right;
     }
 
     tr {
       background-color: #001245;
       border-bottom: 2px solid #1a1a1a;
-      transition: background-color 0.3s, color 0.3s;
     }
 
     tr.highlight {
-      background-color: #f5ed40ff !important;
-      color: black !important;
+      background-color: #f5ed40ff;
+      color: black;
       font-weight: bold;
     }
 
     td {
-      font-weight: 700;
-      font-size: 1.5rem;
-      white-space: nowrap;
+      font-weight: 600;
+    }
+
+    th:first-child, td:first-child {
+      width: 3.2rem;
     }
 
     .empty-message {
@@ -82,7 +81,7 @@
   </style>
 </head>
 <body>
-  <div class="header-wrapper">
+  <div class="title-bar">
     <h1>Call Time</h1>
   </div>
   <table id="callSummaryTable">
@@ -112,9 +111,10 @@
     }
 
     function formatTalkTime(seconds) {
-      const h = Math.floor(seconds / 3600);
-      const m = Math.floor((seconds % 3600) / 60);
-      return `${h}:${m.toString().padStart(2, '0')}`;
+      const totalMinutes = Math.floor(seconds / 60);
+      const hours = Math.floor(totalMinutes / 60);
+      const minutes = totalMinutes % 60;
+      return `${hours}:${minutes.toString().padStart(2, '0')}`;
     }
 
     async function fetchCallSummaries() {
@@ -142,24 +142,29 @@
           body: JSON.stringify(body)
         });
 
+        if (!res.ok) {
+          throw new Error("HTTP " + res.status);
+        }
+
         const json = await res.json();
 
         data = json
-          .filter(entry => entry.Total_Talk_Time > 0)
-          .sort((a, b) => b.Total_Talk_Time - a.Total_Talk_Time)
-          .map((entry, index) => ({
-            rank: index + 1,
+          .map((entry) => ({
             name: `${entry.FirstName} ${entry.LastName}`,
             dials: entry.External_Outbound_Total,
-            talkTime: Math.round(entry.Total_Talk_Time / 1000)
-          }));
+            talkTime: Math.round(Number(entry.Total_Talk_Time) / 1000)
+          }))
+          .filter(e => e.talkTime > 0)
+          .sort((a, b) => b.talkTime - a.talkTime)
+          .map((entry, i) => ({ ...entry, rank: i + 1 }));
 
         if (data.length === 0) {
           document.getElementById("emptyState").style.display = "block";
           return;
         }
 
-        renderScrollLoop();
+        renderPage(0);
+        setTimeout(scheduleHighlightScroll, 500); // delay scroll setup to allow DOM render
       } catch (err) {
         console.error("❌ Fetch Error:", err);
         document.getElementById("emptyState").textContent = "Error loading data.";
@@ -167,48 +172,45 @@
       }
     }
 
-    function renderScrollLoop() {
-      const totalPages = Math.ceil(data.length / PAGE_SIZE);
+    function renderPage(p) {
+      const tableBody = document.querySelector('#callSummaryTable tbody');
+      tableBody.innerHTML = "";
+
+      const start = p * PAGE_SIZE;
+      const end = start + PAGE_SIZE;
+      const pageSlice = data.slice(start, end);
+
+      pageSlice.forEach((item, i) => {
+        const tr = document.createElement('tr');
+        if (i === 0) tr.classList.add('highlight');
+        tr.innerHTML = `
+          <td>${item.rank}</td>
+          <td>${item.name}</td>
+          <td>${item.dials}</td>
+          <td>${formatTalkTime(item.talkTime)}</td>
+        `;
+        tableBody.appendChild(tr);
+      });
+    }
+
+    function scheduleHighlightScroll() {
+      let highlightIndex = 0;
       let currentPage = 0;
+      const interval = setInterval(() => {
+        const rows = document.querySelectorAll('#callSummaryTable tbody tr');
+        rows.forEach(r => r.classList.remove('highlight'));
 
-      function showPage() {
-        const tableBody = document.querySelector('#callSummaryTable tbody');
-        tableBody.innerHTML = "";
-
-        const start = currentPage * PAGE_SIZE;
-        const pageSlice = data.slice(start, start + PAGE_SIZE);
-
-        pageSlice.forEach((item, i) => {
-          const tr = document.createElement('tr');
-          tr.innerHTML = `
-            <td>${item.rank}</td>
-            <td>${item.name}</td>
-            <td>${item.dials}</td>
-            <td>${formatTalkTime(item.talkTime)}</td>
-          `;
-          tableBody.appendChild(tr);
-        });
-
-        // Animate yellow highlight row
-        let i = 0;
-        const rows = tableBody.querySelectorAll("tr");
-        function highlightNext() {
-          rows.forEach(row => row.classList.remove("highlight"));
-          if (rows[i]) {
-            rows[i].classList.add("highlight");
-            i++;
-            if (i <= rows.length) {
-              setTimeout(highlightNext, 1000);
-            } else {
-              currentPage = (currentPage + 1) % totalPages;
-              setTimeout(showPage, 1000);
-            }
-          }
+        if (rows.length > 0) {
+          rows[highlightIndex].classList.add('highlight');
         }
-        highlightNext();
-      }
 
-      showPage();
+        highlightIndex++;
+        if (highlightIndex >= rows.length) {
+          highlightIndex = 0;
+          currentPage = (currentPage + 1) % Math.ceil(data.length / PAGE_SIZE);
+          renderPage(currentPage);
+        }
+      }, 1000);
     }
 
     fetchCallSummaries();
