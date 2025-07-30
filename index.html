@@ -9,7 +9,7 @@
     *{box-sizing:border-box;margin:0;padding:0}
     html,body{height:100%}
     body {
-      display:flex;flex-direction:column;
+      display:flex; flex-direction:column;
       background:radial-gradient(#000d3b,#000021);
       font-family:'Segoe UI',Tahoma,sans-serif;
       color:#fff;
@@ -186,14 +186,16 @@
       f.department    = p.has("Sales") ? "Sales" : p.get("Department")||null;
       f.location      = p.get("Location")||null;
       f.viewAnalytics = (p.get("view")||"").toLowerCase()==="analytics";
+      // toggle classes
       document.body.classList.toggle("analytics-view", f.viewAnalytics);
       document.body.classList.toggle("sales-view", f.department==="Sales");
+      // set page size
       PAGE_SIZE = f.viewAnalytics ? 10 : 20;
       return f;
     }
 
     async function fetchSummaries(includeAll) {
-      const now = new Date(), s = new Date(now), e = new Date(now);
+      const now=new Date(), s=new Date(now), e=new Date(now);
       s.setHours(7,0,0,0); e.setHours(18,0,0,0);
       const res = await fetch(SUMMARY_URL, {
         method:"POST",
@@ -283,17 +285,12 @@
 
       const filtered=callRows
         .filter(r=>{
-          // only apply filters in non-analytics
-          if(!f.viewAnalytics){
-            const d=map[r.email]||{};
-            if(f.location   && d.location   !== f.location) return false;
-            if(f.department){
-              if(f.department==="Sales")
-                return /\(.*\)/.test(d.department||"");
-              return (d.department||"")
-                       .toLowerCase()
-                       .includes(f.department.toLowerCase());
-            }
+          const d=map[r.email]||{};
+          if(f.location   && d.location   !== f.location) return false;
+          if(f.department){
+            if(f.department==="Sales")
+              return /\(.*\)/.test(d.department||"");
+            return (d.department||"").toLowerCase().includes(f.department.toLowerCase());
           }
           return true;
         })
@@ -306,7 +303,6 @@
         currentPage=highlightIndex=0;
         render(filtered,map);
       }
-
       refreshTimer=setTimeout(init,REFRESH_MS);
     }
 
