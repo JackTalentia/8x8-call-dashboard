@@ -2,438 +2,275 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Call Time</title>
-  <link rel="icon" href="https://talentia.group/wp-content/uploads/2022/09/cropped-favicon-192x192.png" />
+  <link rel="icon" href="https://talentia.group/wp-content/uploads/2022/09/cropped-favicon-192x192.png"/>
   <style>
     body {
       margin: 0;
       background: radial-gradient(#000d3b, #000021);
       font-family: 'Segoe UI', Tahoma, sans-serif;
-      color: white;
+      color: #fff;
       padding: 0;
     }
-
     .title-bar {
-      background-color: #000d3b;
+      background: #000d3b;
       padding: 0.5rem 2rem;
-      display: flex;
-      align-items: flex-end;
+      display: flex; align-items: flex-end;
       height: 6vh;
       border-bottom: 2px solid #f5ed40ff;
     }
-
     .title-bar h1 {
       font-family: Oxygen-bold, Arial, sans-serif;
       font-size: 2vw;
-      color: white;
-      text-shadow: 2px 2px 8px black;
-      text-rendering: optimizelegibility;
-      text-transform: none;
+      color: #fff;
+      text-shadow: 2px 2px 8px #000;
       line-height: 1;
       font-weight: bold;
       margin: 0;
     }
-
     .main-content {
       display: flex;
-      padding: 2rem;
+      padding: 1rem 2rem;
     }
-
     table {
       width: 70%;
       border-collapse: collapse;
-      font-size: 1.4rem;
+      font-size: 1.3rem;
+      table-layout: fixed;
     }
-
     th, td {
-      padding: 0.9rem 1.2rem;
+      padding: 0 0.5rem;
       text-align: left;
     }
-
     th {
-      background-color: #001a70;
+      background: #001a70;
       color: #f5ed40ff;
-      font-weight: 800;
+      font-weight: 700;
       text-transform: uppercase;
-      font-size: 1.3rem;
+      font-size: 1.2rem;
     }
-
+    /* fixed, smaller row height */
+    tr, td {
+      height: 48px;
+      line-height: 48px;
+    }
     tr {
-      background-color: #001245;
-      border-bottom: 2px solid #1a1a1a;
+      background: #001245;
+      border-bottom: 1px solid #1a1a1a;
     }
-
     tr.highlight {
-      background-color: #f5ed40ff;
-      color: black;
+      background: #f5ed40ff;
+      color: #000;
       font-weight: bold;
     }
-
-    td {
-      font-weight: 600;
-    }
-
     th:first-child, td:first-child {
-      width: 3.2rem;
+      width: 3rem;
     }
-
     .empty-message {
       text-align: center;
-      margin-top: 2rem;
-      font-size: 1.5rem;
+      margin: 2rem;
+      font-size: 1.4rem;
       color: #f5ed40ff;
     }
-
     .sidebar {
       width: 30%;
       padding-left: 2rem;
       text-align: center;
     }
-
     .sidebar img {
       border-radius: 12px;
-      width: 200px;
-      height: 200px;
+      width: 180px;
+      height: 180px;
       object-fit: cover;
       margin: 1rem 0;
     }
-
     .sidebar h2 {
-      font-size: 1.8rem;
+      font-size: 1.7rem;
       color: #f5ed40ff;
-      margin-bottom: 1rem;
+      margin-bottom: 0.5rem;
     }
-
     .sidebar .stat {
-      font-size: 1.5rem;
-      margin-top: 1rem;
+      font-size: 1.4rem;
+      margin-top: 0.5rem;
     }
-
     .sidebar .stat span {
       display: block;
-      font-size: 3rem;
+      font-size: 2.5rem;
       color: #f5ed40ff;
     }
   </style>
 </head>
 <body>
-  <div class="title-bar">
-    <h1>Call Time</h1>
-  </div>
+  <div class="title-bar"><h1>Call Time</h1></div>
   <div class="main-content">
     <table id="callSummaryTable">
       <thead>
         <tr>
-          <th>Rank</th>
-          <th>Name</th>
-          <th>Dials</th>
-          <th>Talk Time</th>
+          <th>Rank</th><th>Name</th><th>Dials</th><th>Talk Time</th>
         </tr>
       </thead>
       <tbody></tbody>
     </table>
-    <div class="sidebar" id="topPerformerSidebar" style="display: none;">
+    <div class="sidebar" id="topPerformerSidebar" style="display:none">
       <h2 id="topName"></h2>
       <img id="topPhoto" src="" alt="">
-      <div class="stat">
-        Dials
-        <span id="topDials">0</span>
-      </div>
-      <div class="stat">
-        Talk Time
-        <span id="topTalkTime">0:00</span>
-      </div>
+      <div class="stat">Dials<span id="topDials">0</span></div>
+      <div class="stat">Talk Time<span id="topTalkTime">0:00</span></div>
     </div>
   </div>
-  <div class="empty-message" id="emptyState" style="display: none;">
+  <div class="empty-message" id="emptyState" style="display:none">
     No data available for today.
   </div>
 
   <script>
-    // Enable console diagnostics with ?debug
-    const DEBUG = new URLSearchParams(location.search).has('debug');
     const callSummaryUrl = "https://umfyxaaumhgkovwuovzl.supabase.co/functions/v1/8x8-Call-Summaries";
-    const lookupUrl = "https://umfyxaaumhgkovwuovzl.supabase.co/functions/v1/8x8-Employee-Join";
+    const lookupUrl      = "https://umfyxaaumhgkovwuovzl.supabase.co/functions/v1/8x8-Employee-Join";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVtZnl4YWF1bWhna292d3VvdnpsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzU5MDQ5NTYsImV4cCI6MjA1MTQ4MDk1Nn0.mesbr7DPkdt9Xdq0wa2CNUgfZfDScb2KdX6vvzoUi8I";
     const FALLBACK_PHOTO = "https://docs.google.com/drawings/d/e/2PACX-1vT_8sRZLulgLi8vByqho1d1U0dP7d-wvNZ_0TC2zPpfQHk4vPTOZ4HHruVyGxKYAUqEY780Spopi7Cb/pub?w=1440&h=1080";
-    const PAGE_SIZE = 10;
+    const PAGE_SIZE = 10, HIGHLIGHT_MS = 2000, REFRESH_MS = 60000;
 
-    let data = [];
-    let employeeDetails = [];
-    let currentPage = 0;
-    let highlightIndex = 0;
-    // Preload fallback and keep last good photo per email to avoid flicker/alt text
-    const lastPhotoCache = {};
-    const _preloadFallback = new Image();
-    _preloadFallback.src = FALLBACK_PHOTO;
+    let highlightTimer, refreshTimer;
+    let currentPage = 0, highlightIndex = 0;
+
+    function formatTalkTime(sec) {
+      const m = Math.floor(sec/60);
+      return `${Math.floor(m/60)}:${(m%60).toString().padStart(2,'0')}`;
+    }
+    function formatDateTime(d) {
+      return d.toISOString().slice(0,19).replace("T"," ");
+    }
 
     function getFiltersFromUrl() {
-      const params = new URLSearchParams(window.location.search);
-      const filters = {};
-      if (params.has('Sales')) filters.department = 'Sales';
-      if (params.has('Location')) filters.location = params.get('Location');
-      if (params.has('Department')) filters.department = params.get('Department');
-      return filters;
+      const p = new URLSearchParams(location.search), f = {};
+      // case-insensitive include=all
+      f.includeAll   = (p.get("include")||"").toLowerCase() === "all";
+      if (p.has("Sales"))      f.department = "Sales";
+      if (p.has("Location"))   f.location   = p.get("Location");
+      if (p.has("Department")) f.department = p.get("Department");
+      return f;
     }
 
-    function formatDateTime(date) {
-      return date.toISOString().slice(0, 19).replace("T", " ");
-    }
-
-    function formatTalkTime(seconds) {
-      const totalMinutes = Math.floor(seconds / 60);
-      const hours = Math.floor(totalMinutes / 60);
-      const minutes = totalMinutes % 60;
-      return `${hours}:${minutes.toString().padStart(2, '0')}`;
-    }
-
-    async function fetchCallSummaries() {
-      const now = new Date();
-      const start = new Date(now); start.setHours(7, 0, 0, 0);
-      const end = new Date(now);   end.setHours(18, 0, 0, 0);
+    async function fetchCallSummaries(includeAll) {
+      const now=new Date(), start=new Date(now), end=new Date(now);
+      start.setHours(7,0,0,0); end.setHours(18,0,0,0);
 
       const body = {
-        startTime: formatDateTime(start),
-        endTime: formatDateTime(end),
-        timeZone: "Europe/London",
-        minTalkTime: 1,
-        fields: ["FirstName", "LastName", "External_Outbound_Total", "Total_Talk_Time", "Email"]
+        startTime:   formatDateTime(start),
+        endTime:     formatDateTime(end),
+        timeZone:    "Europe/London",
+        minTalkTime: includeAll ? 0 : 1,
+        fields:      ["FirstName","LastName","External_Outbound_Total","Total_Talk_Time","Email"]
       };
 
       const res = await fetch(callSummaryUrl, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+          "Content-Type":  "application/json",
+          "Authorization": `Bearer ${SUPABASE_ANON_KEY}`
         },
         body: JSON.stringify(body)
       });
-
       const json = await res.json();
+      if (!Array.isArray(json)) return [];
 
-      // ✅ Guard against missing or malformed responses
-      if (!Array.isArray(json)) {
-        console.warn('Call summaries response was not an array:', json);
-        return [];
-      }
-
-      // ✅ Skip rows that don't have an Email (prevents undefined .email later)
       return json
-        .filter((entry) => typeof entry.Email === 'string' && entry.Email.length > 0)
-        .map((entry) => ({
-          name: `${entry.FirstName ?? ''} ${entry.LastName ?? ''}`.trim(),
-          email: entry.Email.toLowerCase(),
-          dials: Number(entry.External_Outbound_Total ?? 0),
-          talkTime: Math.round(Number(entry.Total_Talk_Time ?? 0) / 1000)
+        .filter(o => o.Email)
+        .map(o => ({
+          name:     `${o.FirstName||""} ${o.LastName||""}`.trim(),
+          email:    o.Email.toLowerCase(),
+          dials:    +o.External_Outbound_Total,
+          talkTime: Math.round(+o.Total_Talk_Time/1000)
         }))
-        .filter((e) => e.talkTime > 0);
+        .filter(r => includeAll ? true : r.talkTime > 0);
     }
 
     async function fetchEmployeeDetails(emails) {
-      // Deduplicate and skip blanks
-      const payload = [...new Set(emails.filter(Boolean))];
-      if (payload.length === 0) return [];
-
-      try {
-        const res = await fetch(lookupUrl, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
-          },
-          body: JSON.stringify({ emails: payload })
-        });
-
-        if (!res.ok) {
-          const err = await res.text();
-          console.error('Employee lookup failed:', res.status, err);
-          return [];
-        }
-
-        const json = await res.json();
-        if (!Array.isArray(json)) {
-          console.warn('Employee lookup returned non-array:', json);
-          return [];
-        }
-        return json;
-      } catch (e) {
-        console.error('Employee lookup fetch error:', e);
-        return [];
-      }
-    }
-
-    function applyFilters(rows, detailsMap, filters) {
-      return rows.filter((item) => {
-        const detail = detailsMap[item.email];
-
-        // If a filter depends on employee metadata, require the detail; otherwise allow through
-        if (filters.location) {
-          if (!detail || detail.location !== filters.location) return false;
-        }
-        if (filters.department) {
-          if (filters.department === 'Sales') {
-            if (!detail || !/(\(.*\))/.test(detail.department || '')) return false;
-          } else {
-            if (!detail || !detail.department?.includes(filters.department)) return false;
-          }
-        }
-        return true;
+      const unique = [...new Set(emails)];
+      if (!unique.length) return [];
+      const res = await fetch(lookupUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type":  "application/json",
+          "Authorization": `Bearer ${SUPABASE_ANON_KEY}`
+        },
+        body: JSON.stringify({ emails: unique })
       });
+      const json = await res.json();
+      return Array.isArray(json) ? json : [];
     }
 
-    function renderPage(sortedData, detailsMap) {
-      const tableBody = document.querySelector('#callSummaryTable tbody');
-      tableBody.innerHTML = '';
+    function updateSidebar(row, detail) {
+      if (!row) return;
+      document.getElementById("topPerformerSidebar").style.display = "block";
+      document.getElementById("topName").textContent      = row.name;
+      document.getElementById("topDials").textContent     = row.dials;
+      document.getElementById("topTalkTime").textContent = formatTalkTime(row.talkTime);
+      const img = document.getElementById("topPhoto");
+      const src = detail?.bamboo_photo_url || FALLBACK_PHOTO;
+      if (img.src !== src) img.src = src;
+    }
 
+    function render(rows, detailsMap) {
+      clearInterval(highlightTimer);
+      const tbody = document.querySelector("#callSummaryTable tbody");
+      tbody.innerHTML = "";
       const start = currentPage * PAGE_SIZE;
-      const end = Math.min(start + PAGE_SIZE, sortedData.length);
-      const pageSlice = sortedData.slice(start, end);
+      const slice = rows.slice(start, start + PAGE_SIZE);
+      highlightIndex %= slice.length||1;
 
-      // Keep highlightIndex in range of rows actually displayed
-      if (highlightIndex >= pageSlice.length) highlightIndex = 0;
-
-      pageSlice.forEach((item, i) => {
-        const tr = document.createElement('tr');
-        if (i === highlightIndex) tr.classList.add('highlight');
-        tr.innerHTML = `
-          <td>${item.rank}</td>
-          <td>${item.name}</td>
-          <td>${item.dials}</td>
-          <td>${formatTalkTime(item.talkTime)}</td>
-        `;
-        tableBody.appendChild(tr);
+      slice.forEach((r, i) => {
+        const tr = document.createElement("tr");
+        if (i === highlightIndex) tr.classList.add("highlight");
+        tr.innerHTML = `<td>${r.rank}</td><td>${r.name}</td><td>${r.dials}</td><td>${formatTalkTime(r.talkTime)}</td>`;
+        tbody.appendChild(tr);
       });
 
-      // ✅ Safely update sidebar for the highlighted row
-      const highlighted = pageSlice[highlightIndex];
-      if (highlighted) {
-        const details = detailsMap[highlighted.email];
-        showHighlightedPerson(highlighted, details);
-      }
-    }
+      updateSidebar(slice[highlightIndex], detailsMap[slice[highlightIndex]?.email]);
 
-    function cycleHighlight(sortedData, detailsMap) {
-      const totalPages = Math.max(1, Math.ceil(sortedData.length / PAGE_SIZE));
-      setInterval(() => {
-        const start = currentPage * PAGE_SIZE;
-        const end = Math.min(start + PAGE_SIZE, sortedData.length);
-        const rowsOnPage = Math.max(1, end - start);
-
-        highlightIndex = (highlightIndex + 1) % rowsOnPage;
-        if (highlightIndex === 0) {
-          currentPage = (currentPage + 1) % totalPages;
+      highlightTimer = setInterval(() => {
+        highlightIndex++;
+        if (highlightIndex >= slice.length) {
+          highlightIndex = 0;
+          currentPage = (currentPage + 1) % Math.ceil(rows.length / PAGE_SIZE);
         }
-        renderPage(sortedData, detailsMap);
-      }, 2000);
-    }
-
-    function showHighlightedPerson(row, details) {
-      const sidebar = document.getElementById('topPerformerSidebar');
-      sidebar.style.display = 'block';
-
-      document.getElementById('topName').textContent = row.name || '';
-      const img = document.getElementById('topPhoto');
-      img.decoding = 'async';
-      img.loading = 'eager';
-      const key = (row.email || '').toLowerCase();
-      const candidate = details?.bamboo_photo_url || '';
-      const startSrc = lastPhotoCache[key] || FALLBACK_PHOTO;
-      if (img.src !== startSrc) img.src = startSrc;
-      if (candidate && candidate !== startSrc) {
-        const probe = new Image();
-        probe.onload = () => { lastPhotoCache[key] = candidate; img.src = candidate; };
-        probe.onerror = () => { lastPhotoCache[key] = FALLBACK_PHOTO; img.src = FALLBACK_PHOTO; };
-        probe.src = candidate;
-      } else if (!candidate) {
-        lastPhotoCache[key] = FALLBACK_PHOTO;
-        img.src = FALLBACK_PHOTO;
-      }
-      document.getElementById('topDials').textContent = String(row.dials ?? 0);
-      document.getElementById('topTalkTime').textContent = formatTalkTime(row.talkTime ?? 0);
+        render(rows, detailsMap);
+      }, HIGHLIGHT_MS);
     }
 
     async function init() {
-      const rawData = await fetchCallSummaries();
-      const emails = rawData.map((d) => d.email).filter(Boolean);
-
-      employeeDetails = await fetchEmployeeDetails(emails);
-      const detailsMap = Object.fromEntries(
-        employeeDetails
-          .filter((d) => typeof d.work_email === 'string')
-          .map((d) => [d.work_email.toLowerCase(), d])
-      );
+      clearTimeout(refreshTimer);
 
       const filters = getFiltersFromUrl();
+      const callRows = await fetchCallSummaries(filters.includeAll);
+      const details  = await fetchEmployeeDetails(callRows.map(r => r.email));
+      const map      = Object.fromEntries(details.map(d => [ d.work_email.toLowerCase(), d ]));
 
-      if (DEBUG) {
-        const unmatched = emails.filter(e => !(e in detailsMap));
-        const hasBrackets = (s) => /\([^)]*\)/.test(s || '');
-        const withDetail = rawData.filter(r => detailsMap[r.email]);
-        const withSalesDept = withDetail.filter(r => hasBrackets(detailsMap[r.email]?.department));
-        const droppedNoSalesDept = withDetail
-          .filter(r => !hasBrackets(detailsMap[r.email]?.department))
-          .map(r => ({ email: r.email, dept: detailsMap[r.email]?.department }));
-        console.group('Debug');
-        console.log('rawData', rawData.length);
-        console.log('emails', emails.length);
-        console.log('employee rows', employeeDetails.length);
-        console.log('unmatched emails', unmatched.length, unmatched);
-        console.log('with employee detail', withDetail.length);
-        console.log('with sales-style dept (has brackets)', withSalesDept.length);
-        if (filters.department === 'Sales') {
-          console.log('dropped (has detail but not Sales dept)', droppedNoSalesDept);
-        }
-        console.groupEnd();
+      const filtered = callRows
+        .filter(r => {
+          const d = map[r.email] || {};
+          if (filters.location   && d.location   !== filters.location)   return false;
+          if (filters.department) {
+            if (filters.department === "Sales") {
+              return /\(.*\)/.test(d.department || "");
+            }
+            return (d.department || "")
+                     .toLowerCase()
+                     .includes(filters.department.toLowerCase());
+          }
+          return true;
+        })
+        .sort((a,b) => b.talkTime - a.talkTime)
+        .map((r,i) => ({ ...r, rank: i+1 }));
+
+      if (!filtered.length) {
+        document.getElementById("emptyState").style.display = "block";
+      } else {
+        currentPage = highlightIndex = 0;
+        render(filtered, map);
       }
 
-      const filtered = applyFilters(rawData, detailsMap, filters)
-        .sort((a, b) => b.talkTime - a.talkTime)
-        .map((entry, i) => ({ ...entry, rank: i + 1 }));
-
-      if (filtered.length === 0) {
-        document.getElementById('emptyState').style.display = 'block';
-        return;
-      }
-
-      currentPage = 0;
-      highlightIndex = 0;
-      renderPage(filtered, detailsMap);
-      cycleHighlight(filtered, detailsMap);
-    }
-
-    // --- Optional lightweight tests (run with ?test=1) ---
-    function runTests() {
-      console.group('Dashboard Tests');
-      // 1) Missing Email should be filtered out
-      const testRaw = [
-        { FirstName: 'A', LastName: 'B', Email: 'a@b.com', External_Outbound_Total: 3, Total_Talk_Time: 60000 },
-        { FirstName: 'X', LastName: 'Y', /* Email missing */ External_Outbound_Total: 5, Total_Talk_Time: 120000 }
-      ];
-      const mapped = testRaw
-        .filter((e) => typeof e.Email === 'string')
-        .map((e) => ({ email: e.Email.toLowerCase() }));
-      console.assert(mapped.length === 1 && mapped[0].email === 'a@b.com', 'Missing email filter failed');
-
-      // 2) Highlight guard should not throw when page has 1 row
-      const rows = [{ name: 'Only One', email: 'one@ex.com', dials: 1, talkTime: 30 }];
-      try {
-        highlightIndex = 0; currentPage = 0;
-        // simulate minimal details map
-        const dm = { 'one@ex.com': { bamboo_photo_url: '' } };
-        // Render should not throw
-        // (We won't call renderPage here since it touches DOM; just verify index arithmetic)
-        const rowsOnPage = Math.max(1, rows.length);
-        const next = (highlightIndex + 1) % rowsOnPage;
-        console.assert(next === 0, 'Highlight modulo logic failed');
-      } catch (e) {
-        console.error('Highlight guard failed', e);
-      }
-      console.groupEnd();
-    }
-
-    if (new URLSearchParams(location.search).has('test')) {
-      runTests();
+      refreshTimer = setTimeout(init, REFRESH_MS);
     }
 
     init();
