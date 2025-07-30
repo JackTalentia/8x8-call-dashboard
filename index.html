@@ -1,102 +1,123 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Call Time</title>
   <link rel="icon" href="https://talentia.group/wp-content/uploads/2022/09/cropped-favicon-192x192.png"/>
   <style>
+    * { box-sizing: border-box; margin:0; padding:0 }
+    html, body { height: 100% }
     body {
-      margin: 0;
+      display: flex;
+      flex-direction: column;
       background: radial-gradient(#000d3b, #000021);
       font-family: 'Segoe UI', Tahoma, sans-serif;
       color: #fff;
-      padding: 0;
     }
     .title-bar {
+      flex: 0 0 auto;
       background: #000d3b;
       padding: 0.5rem 2rem;
-      display: flex; align-items: flex-end;
-      height: 6vh;
       border-bottom: 2px solid #f5ed40ff;
     }
     .title-bar h1 {
       font-family: Oxygen-bold, Arial, sans-serif;
       font-size: 2vw;
-      color: #fff;
       text-shadow: 2px 2px 8px #000;
-      line-height: 1;
-      font-weight: bold;
       margin: 0;
     }
     .main-content {
       display: flex;
       padding: 1rem 2rem;
+      flex: 1 1 auto;
     }
     table {
       width: 70%;
       border-collapse: collapse;
       font-size: 1.3rem;
       table-layout: fixed;
+      display: flex; flex-direction: column; height: 100%;
     }
-    th, td {
-      padding: 0 0.5rem;
-      text-align: left;
+    thead {
+      flex: 0 0 auto;
     }
-    th {
+    thead tr {
+      display: flex;
       background: #001a70;
+    }
+    thead th {
+      flex: 1;
+      padding: 0 0.5rem;
       color: #f5ed40ff;
       font-weight: 700;
       text-transform: uppercase;
       font-size: 1.2rem;
+      text-align: left;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
-    /* fixed, smaller row height */
-    tr, td {
-      height: 48px;
-      line-height: 48px;
+    thead th:first-child { flex: 0 0 3rem }
+
+    tbody {
+      flex: 1 1 auto;
+      display: flex;
+      flex-direction: column;
     }
-    tr {
+    tbody tr {
+      flex: 1;
+      display: flex;
       background: #001245;
       border-bottom: 1px solid #1a1a1a;
     }
-    tr.highlight {
+    tbody tr.highlight {
       background: #f5ed40ff;
       color: #000;
       font-weight: bold;
     }
-    th:first-child, td:first-child {
-      width: 3rem;
+    tbody td {
+      flex: 1;
+      padding: 0 0.5rem;
+      display: flex;
+      align-items: center;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
-    .empty-message {
-      text-align: center;
-      margin: 2rem;
-      font-size: 1.4rem;
-      color: #f5ed40ff;
-    }
+    tbody td:first-child { flex: 0 0 3rem }
+
     .sidebar {
       width: 30%;
       padding-left: 2rem;
       text-align: center;
+      overflow: hidden;
     }
     .sidebar img {
       border-radius: 12px;
-      width: 180px;
-      height: 180px;
+      width: 180px; height: 180px;
       object-fit: cover;
       margin: 1rem 0;
     }
     .sidebar h2 {
       font-size: 1.7rem;
       color: #f5ed40ff;
-      margin-bottom: 0.5rem;
+      margin-bottom: .5rem;
     }
     .sidebar .stat {
       font-size: 1.4rem;
-      margin-top: 0.5rem;
+      margin-top: .5rem;
     }
     .sidebar .stat span {
       display: block;
       font-size: 2.5rem;
+      color: #f5ed40ff;
+    }
+
+    .empty-message {
+      text-align: center;
+      margin: 2rem;
+      font-size: 1.4rem;
       color: #f5ed40ff;
     }
   </style>
@@ -106,9 +127,7 @@
   <div class="main-content">
     <table id="callSummaryTable">
       <thead>
-        <tr>
-          <th>Rank</th><th>Name</th><th>Dials</th><th>Talk Time</th>
-        </tr>
+        <tr><th>Rank</th><th>Name</th><th>Dials</th><th>Talk Time</th></tr>
       </thead>
       <tbody></tbody>
     </table>
@@ -124,26 +143,30 @@
   </div>
 
   <script>
-    const callSummaryUrl = "https://umfyxaaumhgkovwuovzl.supabase.co/functions/v1/8x8-Call-Summaries";
-    const lookupUrl      = "https://umfyxaaumhgkovwuovzl.supabase.co/functions/v1/8x8-Employee-Join";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVtZnl4YWF1bWhna292d3VvdnpsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzU5MDQ5NTYsImV4cCI6MjA1MTQ4MDk1Nn0.mesbr7DPkdt9Xdq0wa2CNUgfZfDScb2KdX6vvzoUi8I";
-    const FALLBACK_PHOTO = "https://docs.google.com/drawings/d/e/2PACX-1vT_8sRZLulgLi8vByqho1d1U0dP7d-wvNZ_0TC2zPpfQHk4vPTOZ4HHruVyGxKYAUqEY780Spopi7Cb/pub?w=1440&h=1080";
-    const PAGE_SIZE = 10, HIGHLIGHT_MS = 2000, REFRESH_MS = 60000;
+    const SUMMARY_URL       = "https://umfyxaaumhgkovwuovzl.supabase.co/functions/v1/8x8-Call-Summaries";
+    const EMPLOYEE_JOIN_URL = "https://umfyxaaumhgkovwuovzl.supabase.co/functions/v1/8x8-Employee-Join";
+    const KEY               = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh..."; 
+    const FALLBACK_PHOTO    = "https://docs.google.com/drawings/d/e/2PACX-1vT_8sRZLulgLi8vByqho1d1U0dP7d-wvNZ_0TC2zPpfQHk4vPTOZ4HHruVyGxKYAUqEY780Spopi7Cb/pub?w=1440&h=1080";
 
-    let highlightTimer, refreshTimer;
-    let currentPage = 0, highlightIndex = 0;
+    const PAGE_SIZE   = 10,
+          HIGHLIGHT_MS = 2000,
+          REFRESH_MS   = 60000;
 
-    function formatTalkTime(sec) {
-      const m = Math.floor(sec/60);
-      return `${Math.floor(m/60)}:${(m%60).toString().padStart(2,'0')}`;
+    let currentPage = 0,
+        highlightIndex = 0,
+        highlightTimer,
+        refreshTimer;
+
+    function fmtTalkTime(sec) {
+      const m = Math.floor(sec / 60);
+      return `${Math.floor(m/60)}:${(m % 60).toString().padStart(2,'0')}`;
     }
-    function formatDateTime(d) {
+    function fmtDateTime(d) {
       return d.toISOString().slice(0,19).replace("T"," ");
     }
 
     function getFiltersFromUrl() {
       const p = new URLSearchParams(location.search), f = {};
-      // case-insensitive include=all
       f.includeAll   = (p.get("include")||"").toLowerCase() === "all";
       if (p.has("Sales"))      f.department = "Sales";
       if (p.has("Location"))   f.location   = p.get("Location");
@@ -152,22 +175,25 @@
     }
 
     async function fetchCallSummaries(includeAll) {
-      const now=new Date(), start=new Date(now), end=new Date(now);
-      start.setHours(7,0,0,0); end.setHours(18,0,0,0);
+      const now   = new Date(),
+            start = new Date(now),
+            end   = new Date(now);
+      start.setHours(7,0,0,0);
+      end.setHours(18,0,0,0);
 
       const body = {
-        startTime:   formatDateTime(start),
-        endTime:     formatDateTime(end),
+        startTime:   fmtDateTime(start),
+        endTime:     fmtDateTime(end),
         timeZone:    "Europe/London",
         minTalkTime: includeAll ? 0 : 1,
         fields:      ["FirstName","LastName","External_Outbound_Total","Total_Talk_Time","Email"]
       };
 
-      const res = await fetch(callSummaryUrl, {
-        method: "POST",
+      const res  = await fetch(SUMMARY_URL, {
+        method:  "POST",
         headers: {
           "Content-Type":  "application/json",
-          "Authorization": `Bearer ${SUPABASE_ANON_KEY}`
+          "Authorization": `Bearer ${KEY}`
         },
         body: JSON.stringify(body)
       });
@@ -182,19 +208,20 @@
           dials:    +o.External_Outbound_Total,
           talkTime: Math.round(+o.Total_Talk_Time/1000)
         }))
+        // HERE is the includeAll logic:
         .filter(r => includeAll ? true : r.talkTime > 0);
     }
 
     async function fetchEmployeeDetails(emails) {
-      const unique = [...new Set(emails)];
-      if (!unique.length) return [];
-      const res = await fetch(lookupUrl, {
+      const uniq = [...new Set(emails)];
+      if (!uniq.length) return [];
+      const res = await fetch(EMPLOYEE_JOIN_URL, {
         method: "POST",
         headers: {
           "Content-Type":  "application/json",
-          "Authorization": `Bearer ${SUPABASE_ANON_KEY}`
+          "Authorization": `Bearer ${KEY}`
         },
-        body: JSON.stringify({ emails: unique })
+        body: JSON.stringify({ emails: uniq })
       });
       const json = await res.json();
       return Array.isArray(json) ? json : [];
@@ -203,11 +230,12 @@
     function updateSidebar(row, detail) {
       if (!row) return;
       document.getElementById("topPerformerSidebar").style.display = "block";
-      document.getElementById("topName").textContent      = row.name;
-      document.getElementById("topDials").textContent     = row.dials;
-      document.getElementById("topTalkTime").textContent = formatTalkTime(row.talkTime);
-      const img = document.getElementById("topPhoto");
-      const src = detail?.bamboo_photo_url || FALLBACK_PHOTO;
+      document.getElementById("topName").textContent    = row.name;
+      document.getElementById("topDials").textContent   = row.dials;
+      document.getElementById("topTalkTime").textContent= fmtTalkTime(row.talkTime);
+
+      const img = document.getElementById("topPhoto"),
+            src = detail?.bamboo_photo_url || FALLBACK_PHOTO;
       if (img.src !== src) img.src = src;
     }
 
@@ -215,14 +243,19 @@
       clearInterval(highlightTimer);
       const tbody = document.querySelector("#callSummaryTable tbody");
       tbody.innerHTML = "";
+
       const start = currentPage * PAGE_SIZE;
       const slice = rows.slice(start, start + PAGE_SIZE);
-      highlightIndex %= slice.length||1;
+      highlightIndex %= slice.length || 1;
 
       slice.forEach((r, i) => {
         const tr = document.createElement("tr");
         if (i === highlightIndex) tr.classList.add("highlight");
-        tr.innerHTML = `<td>${r.rank}</td><td>${r.name}</td><td>${r.dials}</td><td>${formatTalkTime(r.talkTime)}</td>`;
+        tr.innerHTML = `
+          <td>${r.rank}</td>
+          <td>${r.name}</td>
+          <td>${r.dials}</td>
+          <td>${fmtTalkTime(r.talkTime)}</td>`;
         tbody.appendChild(tr);
       });
 
@@ -242,13 +275,14 @@
       clearTimeout(refreshTimer);
 
       const filters = getFiltersFromUrl();
-      const callRows = await fetchCallSummaries(filters.includeAll);
-      const details  = await fetchEmployeeDetails(callRows.map(r => r.email));
-      const map      = Object.fromEntries(details.map(d => [ d.work_email.toLowerCase(), d ]));
+      // pass includeAll flag in here:
+      const callRows   = await fetchCallSummaries(filters.includeAll);
+      const detailsArr = await fetchEmployeeDetails(callRows.map(r => r.email));
+      const detailsMap = Object.fromEntries(detailsArr.map(d => [ d.work_email.toLowerCase(), d ]));
 
       const filtered = callRows
         .filter(r => {
-          const d = map[r.email] || {};
+          const d = detailsMap[r.email] || {};
           if (filters.location   && d.location   !== filters.location)   return false;
           if (filters.department) {
             if (filters.department === "Sales") {
@@ -267,7 +301,7 @@
         document.getElementById("emptyState").style.display = "block";
       } else {
         currentPage = highlightIndex = 0;
-        render(filtered, map);
+        render(filtered, detailsMap);
       }
 
       refreshTimer = setTimeout(init, REFRESH_MS);
