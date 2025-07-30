@@ -3,46 +3,58 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>8x8 Call Dashboard</title>
+  <title>8x8 Talk Time Leaderboard</title>
   <style>
     body {
-      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
       background: radial-gradient(#000d3b, #000021);
       color: white;
-      margin: 0;
+      font-family: 'Segoe UI', Tahoma, sans-serif;
       padding: 2rem;
     }
+
     h1 {
+      font-size: 2.2rem;
       text-align: center;
-      color: #ffde59;
-      margin-bottom: 1rem;
+      margin-bottom: 1.5rem;
+      color: #f5ed40ff;
+      text-transform: uppercase;
+      font-weight: 700;
+      letter-spacing: 1px;
     }
+
     table {
       width: 100%;
       border-collapse: collapse;
-      font-size: 1.2rem;
+      font-size: 1.4rem;
     }
+
     th, td {
-      padding: 0.75rem 1rem;
+      padding: 0.9rem 1.2rem;
       text-align: left;
     }
+
     th {
       background-color: #001a70;
-      color: #ffde59;
+      color: #f5ed40ff;
+      font-weight: 800;
+      font-size: 1.3rem;
       text-transform: uppercase;
-      font-weight: bold;
     }
+
     tr {
       background-color: #001245;
-      border-bottom: 1px solid #333;
+      border-bottom: 2px solid #1a1a1a;
     }
+
     tr.highlight {
-      background-color: yellow;
+      background-color: #f5ed40ff;
       color: black;
       font-weight: bold;
     }
-    .hidden {
-      display: none;
+
+    td {
+      font-weight: 600;
     }
   </style>
 </head>
@@ -53,8 +65,8 @@
       <tr>
         <th>Rank</th>
         <th>Name</th>
-        <th>External Outbound</th>
-        <th>Total Talk Time (min)</th>
+        <th>Dials</th>
+        <th>Talk Time</th>
       </tr>
     </thead>
     <tbody></tbody>
@@ -89,15 +101,15 @@
         .map((entry, index) => ({
           rank: index + 1,
           name: `${entry.FirstName} ${entry.LastName}`,
-          outbound: entry.External_Outbound_Total,
-          talk: Math.round(entry.Total_Talk_Time / 60000) // Convert ms to minutes
+          dials: entry.External_Outbound_Total,
+          talkTime: Math.round(entry.Total_Talk_Time / 1000) // seconds
         }));
 
       renderPage(0);
       setInterval(() => {
         page = (page + 1) % Math.ceil(data.length / PAGE_SIZE);
         renderPage(page);
-      }, 5000); // scroll every 5 seconds
+      }, 5000); // every 5s
     }
 
     function renderPage(p) {
@@ -114,8 +126,8 @@
         tr.innerHTML = `
           <td>${item.rank}</td>
           <td>${item.name}</td>
-          <td>${item.outbound}</td>
-          <td>${item.talk}</td>
+          <td>${item.dials}</td>
+          <td>${item.talkTime}</td>
         `;
         tableBody.appendChild(tr);
       });
