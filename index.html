@@ -46,9 +46,10 @@
       text-transform: uppercase;
       font-size: 1.2rem;
     }
+    /* fixed row height */
     tr, td {
-      height: 40px;
-      line-height: 40px;
+      height: 40px !important;
+      line-height: 40px !important;
     }
     tr {
       background: #001245;
@@ -94,16 +95,26 @@
       font-size: 2.4rem;
       color: #f5ed40ff;
     }
+
+    /* —————— Sales view overrides —————— */
+    .sales-view table {
+      font-size: 2.6rem !important;
+    }
+    .sales-view tr,
+    .sales-view td {
+      height: 80px !important;
+      line-height: 80px !important;
+    }
   </style>
 </head>
 <body>
-  <!-- Title bar; will be hidden if view=analytics -->
   <div class="title-bar" id="titleBar"><h1>Call Time</h1></div>
-
   <div class="main-content">
     <table id="callSummaryTable">
       <thead>
-        <tr><th>Rank</th><th>Name</th><th>Dials</th><th>Talk Time</th></tr>
+        <tr>
+          <th>Rank</th><th>Name</th><th>Dials</th><th>Talk Time</th>
+        </tr>
       </thead>
       <tbody></tbody>
     </table>
@@ -114,7 +125,6 @@
       <div class="stat">Talk Time<span id="topTalkTime">0:00</span></div>
     </div>
   </div>
-
   <div class="empty-message" id="emptyState" style="display:none">
     No data available for today.
   </div>
@@ -139,12 +149,10 @@
 
     function getFiltersFromUrl() {
       const p = new URLSearchParams(location.search), f = {};
-      // include=all case-insensitive
-      f.includeAll = (p.get("include")||"").toLowerCase() === "all";
+      f.includeAll   = (p.get("include")||"").toLowerCase() === "all";
       if (p.has("Sales"))      f.department = "Sales";
       if (p.has("Location"))   f.location   = p.get("Location");
       if (p.has("Department")) f.department = p.get("Department");
-      // new view flag
       f.viewAnalytics = (p.get("view")||"").toLowerCase() === "analytics";
       return f;
     }
@@ -198,12 +206,12 @@
     function updateSidebar(row, detail) {
       if (!row) return;
       document.getElementById("topPerformerSidebar").style.display="block";
-      document.getElementById("topName").textContent=row.name;
-      document.getElementById("topDials").textContent=row.dials;
-      document.getElementById("topTalkTime").textContent=formatTalkTime(row.talkTime);
+      document.getElementById("topName").textContent = row.name;
+      document.getElementById("topDials").textContent = row.dials;
+      document.getElementById("topTalkTime").textContent = formatTalkTime(row.talkTime);
       const img=document.getElementById("topPhoto");
       const src=detail?.bamboo_photo_url||FALLBACK_PHOTO;
-      if (img.src!==src) img.src=src;
+      if(img.src!==src) img.src=src;
     }
 
     function render(rows, map) {
@@ -213,7 +221,7 @@
       const start=currentPage*PAGE_SIZE;
       const slice=rows.slice(start,start+PAGE_SIZE);
       highlightIndex%=slice.length||1;
-      slice.forEach((r,i)=>{ 
+      slice.forEach((r,i)=>{
         const tr=document.createElement("tr");
         if(i===highlightIndex) tr.classList.add("highlight");
         tr.innerHTML=`<td>${r.rank}</td><td>${r.name}</td><td>${r.dials}</td><td>${formatTalkTime(r.talkTime)}</td>`;
@@ -233,10 +241,12 @@
     async function init(){
       clearTimeout(refreshTimer);
       const f=getFiltersFromUrl();
-      // hide title if view=analytics
-      if(f.viewAnalytics){
-        document.getElementById("titleBar").style.display="none";
-      }
+      // hide title if analytics
+      if(f.viewAnalytics) document.getElementById("titleBar").style.display="none";
+      // sales‐view class
+      if(f.department==="Sales") document.body.classList.add("sales-view");
+      else document.body.classList.remove("sales-view");
+
       const callRows=await fetchCallSummaries(f.includeAll);
       const details=await fetchEmployeeDetails(callRows.map(r=>r.email));
       const map=Object.fromEntries(details.map(d=>[d.work_email.toLowerCase(),d]));
@@ -246,9 +256,7 @@
           const d=map[r.email]||{};
           if(f.location && d.location!==f.location) return false;
           if(f.department){
-            if(f.department==="Sales"){
-              return /\(.*\)/.test(d.department||"");
-            }
+            if(f.department==="Sales") return /\(.*\)/.test(d.department||"");
             return (d.department||"").toLowerCase().includes(f.department.toLowerCase());
           }
           return true;
@@ -256,13 +264,11 @@
         .sort((a,b)=>b.talkTime-a.talkTime)
         .map((r,i)=>({...r,rank:i+1}));
 
-      if(!filtered.length){
-        document.getElementById("emptyState").style.display="block";
-      } else {
+      if(!filtered.length) document.getElementById("emptyState").style.display="block";
+      else {
         currentPage=highlightIndex=0;
         render(filtered,map);
       }
-
       refreshTimer=setTimeout(init,REFRESH_MS);
     }
 
