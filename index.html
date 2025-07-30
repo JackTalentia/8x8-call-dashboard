@@ -63,6 +63,16 @@
       font-size: 1.5rem;
       color: #f5ed40ff;
     }
+
+    pre#debugOutput {
+      background: #111;
+      color: #0f0;
+      padding: 1rem;
+      margin-top: 2rem;
+      font-size: 0.9rem;
+      white-space: pre-wrap;
+      border: 1px solid #333;
+    }
   </style>
 </head>
 <body>
@@ -81,9 +91,11 @@
   <div class="empty-message" id="emptyState" style="display: none;">
     No data available for today.
   </div>
+  <pre id="debugOutput" style="display:none;"></pre>
 
   <script>
     const API_URL = "https://umfyxaaumhgkovwuovzl.supabase.co/functions/v1/8x8-Call-Summaries";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVtZnl4YWF1bWhna292d3VvdnpsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzU5MDQ5NTYsImV4cCI6MjA1MTQ4MDk1Nn0.mesbr7DPkdt9Xdq0wa2CNUgfZfDScb2KdX6vvzoUi8I";
     const PAGE_SIZE = 5;
     let data = [];
     let page = 0;
@@ -103,7 +115,7 @@
         startTime: formatDateTime(start),
         endTime: formatDateTime(end),
         timeZone: "Europe/London",
-        minTalkTime: 1,  // milliseconds
+        minTalkTime: 1,
         fields: ["FirstName", "LastName", "External_Outbound_Total", "Total_Talk_Time"]
       };
 
@@ -111,23 +123,27 @@
         const res = await fetch(API_URL, {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
           },
           body: JSON.stringify(body)
         });
 
-        if (!res.ok) {
-          throw new Error("HTTP " + res.status);
-        }
+        const raw = await res.text();
+        const debug = document.getElementById("debugOutput");
+        debug.style.display = "block";
+        debug.textContent = `Raw response:\n${raw}`;
 
-        const json = await res.json();
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+        const json = JSON.parse(raw);
 
         data = json
           .map((entry, index) => ({
             rank: index + 1,
             name: `${entry.FirstName} ${entry.LastName}`,
             dials: entry.External_Outbound_Total,
-            talkTime: Math.round(Number(entry.Total_Talk_Time) / 1000)  // in seconds
+            talkTime: Math.round(Number(entry.Total_Talk_Time) / 1000)
           }))
           .sort((a, b) => b.talkTime - a.talkTime);
 
