@@ -73,7 +73,7 @@
   </table>
 
   <script>
-    const API_URL = "https://your-supabase-project-url/functions/v1/8x8-Call-Summaries";
+    const API_URL = "https://umfyxaaumhgkovwuovzl.supabase.co/functions/v1/8x8-Call-Summaries";
     const PAGE_SIZE = 5;
     let data = [];
     let page = 0;
@@ -83,10 +83,11 @@
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          startTime: "2025-07-29 07:00:00",
-          endTime: "2025-07-29 18:00:00",
-          timeZone: "Europe/London"
-        })
+            startTime: "2025-07-29 07:00:00",
+            endTime: "2025-07-29 18:00:00",
+            timeZone: "Europe/London"
+})
+
       });
 
       if (!res.ok) {
