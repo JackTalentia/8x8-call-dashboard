@@ -34,8 +34,13 @@
       margin: 0;
     }
 
+    .main-content {
+      display: flex;
+      padding: 2rem;
+    }
+
     table {
-      width: 100%;
+      width: 70%;
       border-collapse: collapse;
       font-size: 1.4rem;
     }
@@ -78,33 +83,85 @@
       font-size: 1.5rem;
       color: #f5ed40ff;
     }
+
+    .sidebar {
+      width: 30%;
+      padding-left: 2rem;
+      text-align: center;
+    }
+
+    .sidebar img {
+      border-radius: 12px;
+      max-width: 200px;
+      margin: 1rem 0;
+    }
+
+    .sidebar h2 {
+      font-size: 1.8rem;
+      color: #f5ed40ff;
+      margin-bottom: 1rem;
+    }
+
+    .sidebar .stat {
+      font-size: 1.5rem;
+      margin-top: 1rem;
+    }
+
+    .sidebar .stat span {
+      display: block;
+      font-size: 3rem;
+      color: #f5ed40ff;
+    }
   </style>
 </head>
 <body>
   <div class="title-bar">
     <h1>Call Time</h1>
   </div>
-  <table id="callSummaryTable">
-    <thead>
-      <tr>
-        <th>Rank</th>
-        <th>Name</th>
-        <th>Dials</th>
-        <th>Talk Time</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
+  <div class="main-content">
+    <table id="callSummaryTable">
+      <thead>
+        <tr>
+          <th>Rank</th>
+          <th>Name</th>
+          <th>Dials</th>
+          <th>Talk Time</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+    <div class="sidebar" id="topPerformerSidebar" style="display: none;">
+      <h2 id="topName"></h2>
+      <img id="topPhoto" src="" alt="Top Performer">
+      <div class="stat">
+        Total Interviews MTD
+        <span>8</span>
+      </div>
+      <div class="stat">
+        Total CVs Sent MTD
+        <span>32</span>
+      </div>
+    </div>
+  </div>
   <div class="empty-message" id="emptyState" style="display: none;">
     No data available for today.
   </div>
 
   <script>
-    const API_URL = "https://umfyxaaumhgkovwuovzl.supabase.co/functions/v1/8x8-Call-Summaries";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVtZnl4YWF1bWhna292d3VvdnpsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzU5MDQ5NTYsImV4cCI6MjA1MTQ4MDk1Nn0.mesbr7DPkdt9Xdq0wa2CNUgfZfDScb2KdX6vvzoUi8I";
+    const callSummaryUrl = "https://umfyxaaumhgkovwuovzl.supabase.co/functions/v1/8x8-Call-Summaries";
+    const lookupUrl = "https://umfyxaaumhgkovwuovzl.supabase.co/functions/v1/lookup-employee-details";
+    const SUPABASE_ANON_KEY = "YOUR_KEY_HERE";
     const PAGE_SIZE = 10;
-    let data = [];
-    let page = 0;
+    let data = [], employeeDetails = [];
+
+    function getFiltersFromUrl() {
+      const params = new URLSearchParams(window.location.search);
+      const filters = {};
+      if (params.has('Sales')) filters.department = 'Sales';
+      if (params.has('Location')) filters.location = params.get('Location');
+      if (params.has('Department')) filters.department = params.get('Department');
+      return filters;
+    }
 
     function formatDateTime(date) {
       return date.toISOString().slice(0, 19).replace("T", " ");
@@ -129,58 +186,57 @@
         endTime: formatDateTime(end),
         timeZone: "Europe/London",
         minTalkTime: 1,
-        fields: ["FirstName", "LastName", "External_Outbound_Total", "Total_Talk_Time"]
+        fields: ["FirstName", "LastName", "External_Outbound_Total", "Total_Talk_Time", "Email"]
       };
 
-      try {
-        const res = await fetch(API_URL, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
-          },
-          body: JSON.stringify(body)
-        });
+      const res = await fetch(callSummaryUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+        },
+        body: JSON.stringify(body)
+      });
 
-        if (!res.ok) {
-          throw new Error("HTTP " + res.status);
-        }
-
-        const json = await res.json();
-
-        data = json
-          .map((entry) => ({
-            name: `${entry.FirstName} ${entry.LastName}`,
-            dials: entry.External_Outbound_Total,
-            talkTime: Math.round(Number(entry.Total_Talk_Time) / 1000)
-          }))
-          .filter(e => e.talkTime > 0)
-          .sort((a, b) => b.talkTime - a.talkTime)
-          .map((entry, i) => ({ ...entry, rank: i + 1 }));
-
-        if (data.length === 0) {
-          document.getElementById("emptyState").style.display = "block";
-          return;
-        }
-
-        renderPage(0);
-        setTimeout(scheduleHighlightScroll, 500); // delay scroll setup to allow DOM render
-      } catch (err) {
-        console.error("❌ Fetch Error:", err);
-        document.getElementById("emptyState").textContent = "Error loading data.";
-        document.getElementById("emptyState").style.display = "block";
-      }
+      const json = await res.json();
+      return json
+        .map((entry) => ({
+          name: `${entry.FirstName} ${entry.LastName}`,
+          email: entry.Email?.toLowerCase() || '',
+          dials: entry.External_Outbound_Total,
+          talkTime: Math.round(Number(entry.Total_Talk_Time) / 1000)
+        }))
+        .filter(e => e.talkTime > 0);
     }
 
-    function renderPage(p) {
+    async function fetchEmployeeDetails(emails) {
+      const res = await fetch(lookupUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+        },
+        body: JSON.stringify({ emails })
+      });
+      return await res.json();
+    }
+
+    function applyFilters(data, detailsMap, filters) {
+      return data.filter(item => {
+        const detail = detailsMap[item.email];
+        if (!detail) return false;
+        if (filters.location && detail.locations?.name !== filters.location) return false;
+        if (filters.department && !detail.department?.includes(filters.department)) return false;
+        if (filters.department === 'Sales' && !/\(.*\)/.test(detail.department || '')) return false;
+        return true;
+      });
+    }
+
+    function renderPage(pagedData) {
       const tableBody = document.querySelector('#callSummaryTable tbody');
       tableBody.innerHTML = "";
 
-      const start = p * PAGE_SIZE;
-      const end = start + PAGE_SIZE;
-      const pageSlice = data.slice(start, end);
-
-      pageSlice.forEach((item, i) => {
+      pagedData.forEach((item, i) => {
         const tr = document.createElement('tr');
         if (i === 0) tr.classList.add('highlight');
         tr.innerHTML = `
@@ -193,27 +249,33 @@
       });
     }
 
-    function scheduleHighlightScroll() {
-      let highlightIndex = 0;
-      let currentPage = 0;
-      const interval = setInterval(() => {
-        const rows = document.querySelectorAll('#callSummaryTable tbody tr');
-        rows.forEach(r => r.classList.remove('highlight'));
-
-        if (rows.length > 0) {
-          rows[highlightIndex].classList.add('highlight');
-        }
-
-        highlightIndex++;
-        if (highlightIndex >= rows.length) {
-          highlightIndex = 0;
-          currentPage = (currentPage + 1) % Math.ceil(data.length / PAGE_SIZE);
-          renderPage(currentPage);
-        }
-      }, 1000);
+    function showTopPerformer(top, details) {
+      const sidebar = document.getElementById('topPerformerSidebar');
+      sidebar.style.display = 'block';
+      document.getElementById('topName').textContent = top.name;
+      document.getElementById('topPhoto').src = details?.bamboo_photo_url || '';
     }
 
-    fetchCallSummaries();
+    async function init() {
+      const rawData = await fetchCallSummaries();
+      const emails = rawData.map(d => d.email);
+      const employeeData = await fetchEmployeeDetails(emails);
+      const detailsMap = Object.fromEntries(employeeData.map(d => [d.work_email?.toLowerCase(), d]));
+      const filters = getFiltersFromUrl();
+      const filtered = applyFilters(rawData, detailsMap, filters)
+        .sort((a, b) => b.talkTime - a.talkTime)
+        .map((entry, i) => ({ ...entry, rank: i + 1 }));
+
+      if (filtered.length === 0) {
+        document.getElementById("emptyState").style.display = "block";
+        return;
+      }
+
+      renderPage(filtered);
+      showTopPerformer(filtered[0], detailsMap[filtered[0].email]);
+    }
+
+    init();
   </script>
 </body>
 </html>
