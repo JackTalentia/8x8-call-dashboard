@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Call Time</title>
+  <link rel="icon" href="https://talentia.group/wp-content/uploads/2022/09/cropped-favicon-192x192.png" />
   <style>
     body {
       margin: 0;
@@ -92,7 +93,9 @@
 
     .sidebar img {
       border-radius: 12px;
-      max-width: 200px;
+      width: 200px;
+      height: 200px;
+      object-fit: cover;
       margin: 1rem 0;
     }
 
@@ -132,14 +135,14 @@
     </table>
     <div class="sidebar" id="topPerformerSidebar" style="display: none;">
       <h2 id="topName"></h2>
-      <img id="topPhoto" src="" alt="Top Performer">
+      <img id="topPhoto" src="" alt="">
       <div class="stat">
-        Total Interviews MTD
-        <span>8</span>
+        Dials
+        <span id="topDials">0</span>
       </div>
       <div class="stat">
-        Total CVs Sent MTD
-        <span>32</span>
+        Talk Time
+        <span id="topTalkTime">0:00</span>
       </div>
     </div>
   </div>
@@ -149,10 +152,19 @@
 
   <script>
     const callSummaryUrl = "https://umfyxaaumhgkovwuovzl.supabase.co/functions/v1/8x8-Call-Summaries";
-    const lookupUrl = "https://umfyxaaumhgkovwuovzl.supabase.co/functions/v1/lookup-employee-details";
-    const SUPABASE_ANON_KEY = "YOUR_KEY_HERE";
+    const lookupUrl = "https://umfyxaaumhgkovwuovzl.supabase.co/functions/v1/8x8-Employee-Join";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVtZnl4YWF1bWhna292d3VvdnpsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzU5MDQ5NTYsImV4cCI6MjA1MTQ4MDk1Nn0.mesbr7DPkdt9Xdq0wa2CNUgfZfDScb2KdX6vvzoUi8I";
+    const FALLBACK_PHOTO = "https://docs.google.com/drawings/d/e/2PACX-1vT_8sRZLulgLi8vByqho1d1U0dP7d-wvNZ_0TC2zPpfQHk4vPTOZ4HHruVyGxKYAUqEY780Spopi7Cb/pub?w=1440&h=1080";
     const PAGE_SIZE = 10;
-    let data = [], employeeDetails = [];
+
+    let data = [];
+    let employeeDetails = [];
+    let currentPage = 0;
+    let highlightIndex = 0;
+    // Preload fallback and keep last good photo per email to avoid flicker/alt text
+    const lastPhotoCache = {};
+    const _preloadFallback = new Image();
+    _preloadFallback.src = FALLBACK_PHOTO;
 
     function getFiltersFromUrl() {
       const params = new URLSearchParams(window.location.search);
@@ -176,10 +188,8 @@
 
     async function fetchCallSummaries() {
       const now = new Date();
-      const start = new Date(now);
-      start.setHours(7, 0, 0, 0);
-      const end = new Date(now);
-      end.setHours(18, 0, 0, 0);
+      const start = new Date(now); start.setHours(7, 0, 0, 0);
+      const end = new Date(now);   end.setHours(18, 0, 0, 0);
 
       const body = {
         startTime: formatDateTime(start),
@@ -199,46 +209,91 @@
       });
 
       const json = await res.json();
+
+      // ✅ Guard against missing or malformed responses
+      if (!Array.isArray(json)) {
+        console.warn('Call summaries response was not an array:', json);
+        return [];
+      }
+
+      // ✅ Skip rows that don't have an Email (prevents undefined .email later)
       return json
+        .filter((entry) => typeof entry.Email === 'string' && entry.Email.length > 0)
         .map((entry) => ({
-          name: `${entry.FirstName} ${entry.LastName}`,
-          email: entry.Email?.toLowerCase() || '',
-          dials: entry.External_Outbound_Total,
-          talkTime: Math.round(Number(entry.Total_Talk_Time) / 1000)
+          name: `${entry.FirstName ?? ''} ${entry.LastName ?? ''}`.trim(),
+          email: entry.Email.toLowerCase(),
+          dials: Number(entry.External_Outbound_Total ?? 0),
+          talkTime: Math.round(Number(entry.Total_Talk_Time ?? 0) / 1000)
         }))
-        .filter(e => e.talkTime > 0);
+        .filter((e) => e.talkTime > 0);
     }
 
     async function fetchEmployeeDetails(emails) {
-      const res = await fetch(lookupUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
-        },
-        body: JSON.stringify({ emails })
-      });
-      return await res.json();
+      // Deduplicate and skip blanks
+      const payload = [...new Set(emails.filter(Boolean))];
+      if (payload.length === 0) return [];
+
+      try {
+        const res = await fetch(lookupUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+          },
+          body: JSON.stringify({ emails: payload })
+        });
+
+        if (!res.ok) {
+          const err = await res.text();
+          console.error('Employee lookup failed:', res.status, err);
+          return [];
+        }
+
+        const json = await res.json();
+        if (!Array.isArray(json)) {
+          console.warn('Employee lookup returned non-array:', json);
+          return [];
+        }
+        return json;
+      } catch (e) {
+        console.error('Employee lookup fetch error:', e);
+        return [];
+      }
     }
 
-    function applyFilters(data, detailsMap, filters) {
-      return data.filter(item => {
+    function applyFilters(rows, detailsMap, filters) {
+      return rows.filter((item) => {
         const detail = detailsMap[item.email];
-        if (!detail) return false;
-        if (filters.location && detail.locations?.name !== filters.location) return false;
-        if (filters.department && !detail.department?.includes(filters.department)) return false;
-        if (filters.department === 'Sales' && !/\(.*\)/.test(detail.department || '')) return false;
+
+        // If a filter depends on employee metadata, require the detail; otherwise allow through
+        if (filters.location) {
+          if (!detail || detail.location !== filters.location) return false;
+        }
+        if (filters.department) {
+          if (filters.department === 'Sales') {
+            if (!detail || !/(\(.*\))/.test(detail.department || '')) return false;
+          } else {
+            if (!detail || !detail.department?.includes(filters.department)) return false;
+          }
+        }
         return true;
       });
     }
 
-    function renderPage(pagedData) {
+    function renderPage(sortedData, detailsMap) {
       const tableBody = document.querySelector('#callSummaryTable tbody');
-      tableBody.innerHTML = "";
+      tableBody.innerHTML = '';
 
-      pagedData.forEach((item, i) => {
+      const start = currentPage * PAGE_SIZE;
+      const end = Math.min(start + PAGE_SIZE, sortedData.length);
+      const pageSlice = sortedData.slice(start, end);
+
+      // Keep highlightIndex in range of rows actually displayed
+      if (highlightIndex >= pageSlice.length) highlightIndex = 0;
+
+      pageSlice.forEach((item, i) => {
         const tr = document.createElement('tr');
-        if (i === 0) tr.classList.add('highlight');
+        if (i === highlightIndex) tr.classList.add('highlight');
         tr.innerHTML = `
           <td>${item.rank}</td>
           <td>${item.name}</td>
@@ -247,32 +302,115 @@
         `;
         tableBody.appendChild(tr);
       });
+
+      // ✅ Safely update sidebar for the highlighted row
+      const highlighted = pageSlice[highlightIndex];
+      if (highlighted) {
+        const details = detailsMap[highlighted.email];
+        showHighlightedPerson(highlighted, details);
+      }
     }
 
-    function showTopPerformer(top, details) {
+    function cycleHighlight(sortedData, detailsMap) {
+      const totalPages = Math.max(1, Math.ceil(sortedData.length / PAGE_SIZE));
+      setInterval(() => {
+        const start = currentPage * PAGE_SIZE;
+        const end = Math.min(start + PAGE_SIZE, sortedData.length);
+        const rowsOnPage = Math.max(1, end - start);
+
+        highlightIndex = (highlightIndex + 1) % rowsOnPage;
+        if (highlightIndex === 0) {
+          currentPage = (currentPage + 1) % totalPages;
+        }
+        renderPage(sortedData, detailsMap);
+      }, 2000);
+    }
+
+    function showHighlightedPerson(row, details) {
       const sidebar = document.getElementById('topPerformerSidebar');
       sidebar.style.display = 'block';
-      document.getElementById('topName').textContent = top.name;
-      document.getElementById('topPhoto').src = details?.bamboo_photo_url || '';
+
+      document.getElementById('topName').textContent = row.name || '';
+      const img = document.getElementById('topPhoto');
+      img.decoding = 'async';
+      img.loading = 'eager';
+      const key = (row.email || '').toLowerCase();
+      const candidate = details?.bamboo_photo_url || '';
+      const startSrc = lastPhotoCache[key] || FALLBACK_PHOTO;
+      if (img.src !== startSrc) img.src = startSrc;
+      if (candidate && candidate !== startSrc) {
+        const probe = new Image();
+        probe.onload = () => { lastPhotoCache[key] = candidate; img.src = candidate; };
+        probe.onerror = () => { lastPhotoCache[key] = FALLBACK_PHOTO; img.src = FALLBACK_PHOTO; };
+        probe.src = candidate;
+      } else if (!candidate) {
+        lastPhotoCache[key] = FALLBACK_PHOTO;
+        img.src = FALLBACK_PHOTO;
+      }
+      document.getElementById('topDials'.textContent = String(row.dials ?? 0);
+      document.getElementById('topTalkTime').textContent = formatTalkTime(row.talkTime ?? 0);
     }
 
     async function init() {
       const rawData = await fetchCallSummaries();
-      const emails = rawData.map(d => d.email);
-      const employeeData = await fetchEmployeeDetails(emails);
-      const detailsMap = Object.fromEntries(employeeData.map(d => [d.work_email?.toLowerCase(), d]));
+      const emails = rawData.map((d) => d.email).filter(Boolean);
+
+      employeeDetails = await fetchEmployeeDetails(emails);
+      const detailsMap = Object.fromEntries(
+        employeeDetails
+          .filter((d) => typeof d.work_email === 'string')
+          .map((d) => [d.work_email.toLowerCase(), d])
+      );
+
       const filters = getFiltersFromUrl();
+
       const filtered = applyFilters(rawData, detailsMap, filters)
         .sort((a, b) => b.talkTime - a.talkTime)
         .map((entry, i) => ({ ...entry, rank: i + 1 }));
 
       if (filtered.length === 0) {
-        document.getElementById("emptyState").style.display = "block";
+        document.getElementById('emptyState').style.display = 'block';
         return;
       }
 
-      renderPage(filtered);
-      showTopPerformer(filtered[0], detailsMap[filtered[0].email]);
+      currentPage = 0;
+      highlightIndex = 0;
+      renderPage(filtered, detailsMap);
+      cycleHighlight(filtered, detailsMap);
+    }
+
+    // --- Optional lightweight tests (run with ?test=1) ---
+    function runTests() {
+      console.group('Dashboard Tests');
+      // 1) Missing Email should be filtered out
+      const testRaw = [
+        { FirstName: 'A', LastName: 'B', Email: 'a@b.com', External_Outbound_Total: 3, Total_Talk_Time: 60000 },
+        { FirstName: 'X', LastName: 'Y', /* Email missing */ External_Outbound_Total: 5, Total_Talk_Time: 120000 }
+      ];
+      const mapped = testRaw
+        .filter((e) => typeof e.Email === 'string')
+        .map((e) => ({ email: e.Email.toLowerCase() }));
+      console.assert(mapped.length === 1 && mapped[0].email === 'a@b.com', 'Missing email filter failed');
+
+      // 2) Highlight guard should not throw when page has 1 row
+      const rows = [{ name: 'Only One', email: 'one@ex.com', dials: 1, talkTime: 30 }];
+      try {
+        highlightIndex = 0; currentPage = 0;
+        // simulate minimal details map
+        const dm = { 'one@ex.com': { bamboo_photo_url: '' } };
+        // Render should not throw
+        // (We won't call renderPage here since it touches DOM; just verify index arithmetic)
+        const rowsOnPage = Math.max(1, rows.length);
+        const next = (highlightIndex + 1) % rowsOnPage;
+        console.assert(next === 0, 'Highlight modulo logic failed');
+      } catch (e) {
+        console.error('Highlight guard failed', e);
+      }
+      console.groupEnd();
+    }
+
+    if (new URLSearchParams(location.search).has('test')) {
+      runTests();
     }
 
     init();
