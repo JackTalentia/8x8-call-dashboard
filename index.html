@@ -3,30 +3,71 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>8x8 Call Summary Report</title>
+  <title>8x8 Call Dashboard</title>
   <style>
-    body { font-family: Arial, sans-serif; margin: 2rem; background: #f4f4f4; }
-    table { width: 100%; border-collapse: collapse; background: white; }
-    th, td { padding: 0.75rem; text-align: left; border: 1px solid #ddd; }
-    th { background-color: #0077cc; color: white; }
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: radial-gradient(#000d3b, #000021);
+      color: white;
+      margin: 0;
+      padding: 2rem;
+    }
+    h1 {
+      text-align: center;
+      color: #ffde59;
+      margin-bottom: 1rem;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 1.2rem;
+    }
+    th, td {
+      padding: 0.75rem 1rem;
+      text-align: left;
+    }
+    th {
+      background-color: #001a70;
+      color: #ffde59;
+      text-transform: uppercase;
+      font-weight: bold;
+    }
+    tr {
+      background-color: #001245;
+      border-bottom: 1px solid #333;
+    }
+    tr.highlight {
+      background-color: yellow;
+      color: black;
+      font-weight: bold;
+    }
+    .hidden {
+      display: none;
+    }
   </style>
 </head>
 <body>
-  <h1>8x8 Call Summary (Ranked by Talk Time)</h1>
+  <h1>Top Talk Time (8x8)</h1>
   <table id="callSummaryTable">
     <thead>
       <tr>
+        <th>Rank</th>
         <th>Name</th>
-        <th>External Outbound Total</th>
-        <th>Total Talk Time (sec)</th>
+        <th>External Outbound</th>
+        <th>Total Talk Time (min)</th>
       </tr>
     </thead>
     <tbody></tbody>
   </table>
 
   <script>
+    const API_URL = "https://your-supabase-project-url/functions/v1/8x8-Call-Summaries";
+    const PAGE_SIZE = 5;
+    let data = [];
+    let page = 0;
+
     async function fetchCallSummaries() {
-      const response = await fetch('https://your-supabase-project-url/functions/v1/8x8-Call-Summaries', {
+      const res = await fetch(API_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -36,26 +77,47 @@
         })
       });
 
-      if (!response.ok) {
-        console.error('Error fetching data', await response.text());
+      if (!res.ok) {
+        console.error(await res.text());
         return;
       }
 
-      const data = await response.json();
+      const json = await res.json();
+      data = json
+        .filter(entry => entry.Total_Talk_Time > 0)
+        .sort((a, b) => b.Total_Talk_Time - a.Total_Talk_Time)
+        .map((entry, index) => ({
+          rank: index + 1,
+          name: `${entry.FirstName} ${entry.LastName}`,
+          outbound: entry.External_Outbound_Total,
+          talk: Math.round(entry.Total_Talk_Time / 60000) // Convert ms to minutes
+        }));
+
+      renderPage(0);
+      setInterval(() => {
+        page = (page + 1) % Math.ceil(data.length / PAGE_SIZE);
+        renderPage(page);
+      }, 5000); // scroll every 5 seconds
+    }
+
+    function renderPage(p) {
       const tableBody = document.querySelector('#callSummaryTable tbody');
+      tableBody.innerHTML = "";
 
-      // Sort by Total_Talk_Time descending
-      data.sort((a, b) => b.Total_Talk_Time - a.Total_Talk_Time);
+      const start = p * PAGE_SIZE;
+      const end = start + PAGE_SIZE;
+      const pageSlice = data.slice(start, end);
 
-      // Insert rows
-      data.forEach(entry => {
-        const row = document.createElement('tr');
-        row.innerHTML = `
-          <td>${entry.FirstName} ${entry.LastName}</td>
-          <td>${entry.External_Outbound_Total}</td>
-          <td>${Math.round(entry.Total_Talk_Time / 1000)}</td>
+      pageSlice.forEach((item, i) => {
+        const tr = document.createElement('tr');
+        if (i === 0) tr.classList.add('highlight');
+        tr.innerHTML = `
+          <td>${item.rank}</td>
+          <td>${item.name}</td>
+          <td>${item.outbound}</td>
+          <td>${item.talk}</td>
         `;
-        tableBody.appendChild(row);
+        tableBody.appendChild(tr);
       });
     }
 
