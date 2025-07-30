@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Top Talk Time (8x8)</title>
+  <title>Call Time</title>
   <style>
     body {
       margin: 0;
@@ -14,19 +14,26 @@
     }
 
     h1 {
-      font-size: 2.5rem;
+      color: white;
+      font-size: 2.8rem;
+      margin: 0;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      display: inline-block;
+      border-bottom: 4px solid #f5ed40ff;
+      padding-bottom: 0.25rem;
+    }
+
+    .header-wrapper {
       text-align: center;
       margin-bottom: 2rem;
-      color: #f5ed40ff;
-      text-transform: uppercase;
-      font-weight: 800;
-      letter-spacing: 1px;
     }
 
     table {
       width: 100%;
       border-collapse: collapse;
       font-size: 1.4rem;
+      table-layout: fixed;
     }
 
     th, td {
@@ -40,6 +47,12 @@
       font-weight: 800;
       text-transform: uppercase;
       font-size: 1.3rem;
+      border-bottom: 2px solid #f5ed40ff;
+    }
+
+    th:first-child, td:first-child {
+      width: 4rem;
+      text-align: right;
     }
 
     tr {
@@ -55,7 +68,9 @@
     }
 
     td {
-      font-weight: 600;
+      font-weight: 700;
+      font-size: 1.5rem;
+      white-space: nowrap;
     }
 
     .empty-message {
@@ -67,7 +82,9 @@
   </style>
 </head>
 <body>
-  <h1>Top Talk Time (8x8)</h1>
+  <div class="header-wrapper">
+    <h1>Call Time</h1>
+  </div>
   <table id="callSummaryTable">
     <thead>
       <tr>
@@ -97,7 +114,7 @@
     function formatTalkTime(seconds) {
       const h = Math.floor(seconds / 3600);
       const m = Math.floor((seconds % 3600) / 60);
-      return h > 0 ? `${h}h${m.toString().padStart(2, "0")}` : `${m}m`;
+      return `${h}:${m.toString().padStart(2, '0')}`;
     }
 
     async function fetchCallSummaries() {
@@ -172,7 +189,7 @@
           tableBody.appendChild(tr);
         });
 
-        // Scroll the highlight row down one by one
+        // Animate yellow highlight row
         let i = 0;
         const rows = tableBody.querySelectorAll("tr");
         function highlightNext() {
