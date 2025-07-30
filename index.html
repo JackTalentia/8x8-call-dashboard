@@ -64,10 +64,11 @@
 
     function getFiltersFromUrl() {
       const p = new URLSearchParams(location.search), f = {};
-      f.includeAll = p.get("include") === "all";         // new flag
-      if (p.has("Sales"))     f.department = "Sales";
-      if (p.has("Location"))  f.location   = p.get("Location");
-      if (p.has("Department"))f.department = p.get("Department");
+      // case-insensitive include=all
+      f.includeAll = (p.get("include")||"").toLowerCase() === "all";
+      if (p.has("Sales"))      f.department = "Sales";
+      if (p.has("Location"))   f.location   = p.get("Location");
+      if (p.has("Department")) f.department = p.get("Department");
       return f;
     }
 
@@ -79,7 +80,7 @@
         startTime: formatDateTime(start),
         endTime:   formatDateTime(end),
         timeZone:  "Europe/London",
-        minTalkTime: includeAll ? 0 : 1,  // override when include=all
+        minTalkTime: includeAll ? 0 : 1,
         fields: ["FirstName","LastName","External_Outbound_Total","Total_Talk_Time","Email"]
       };
 
@@ -95,14 +96,13 @@
       if (!Array.isArray(json)) return [];
 
       return json
-        .filter(o => o.Email)  // always drop blank Email
+        .filter(o => o.Email)
         .map(o => ({
           name: `${o.FirstName||""} ${o.LastName||""}`.trim(),
           email: o.Email.toLowerCase(),
           dials: +o.External_Outbound_Total,
           talkTime: Math.round(+o.Total_Talk_Time/1000)
         }))
-        // only drop zero-talkTime if not includeAll
         .filter(r => includeAll ? true : r.talkTime>0);
     }
 
