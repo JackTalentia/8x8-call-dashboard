@@ -15,8 +15,7 @@
     th{background:#001a70;color:#f5ed40ff;font-weight:800;text-transform:uppercase;font-size:1.3rem}
     tr{background:#001245;border-bottom:2px solid #1a1a1a}
     tr.highlight{background:#f5ed40ff;color:#000;font-weight:bold}
-    /* ⇢ fixed row height */
-    tr,td{height:56px;line-height:56px}
+    tr, td{height:56px;line-height:56px}
     th:first-child,td:first-child{width:3.2rem}
     .empty-message{text-align:center;margin-top:2rem;font-size:1.5rem;color:#f5ed40ff}
     .sidebar{width:30%;padding-left:2rem;text-align:center}
@@ -28,7 +27,6 @@
 </head>
 <body>
   <div class="title-bar"><h1>Call Time</h1></div>
-
   <div class="main-content">
     <table id="callSummaryTable">
       <thead>
@@ -36,7 +34,6 @@
       </thead>
       <tbody></tbody>
     </table>
-
     <div class="sidebar" id="topPerformerSidebar" style="display:none">
       <h2 id="topName"></h2>
       <img id="topPhoto" src="" alt="">
@@ -44,107 +41,159 @@
       <div class="stat">Talk Time<span id="topTalkTime">0:00</span></div>
     </div>
   </div>
-
   <div class="empty-message" id="emptyState" style="display:none">No data available for today.</div>
 
   <script>
-    /* ---------- constants ---------- */
     const callSummaryUrl = "https://umfyxaaumhgkovwuovzl.supabase.co/functions/v1/8x8-Call-Summaries";
     const lookupUrl      = "https://umfyxaaumhgkovwuovzl.supabase.co/functions/v1/8x8-Employee-Join";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVtZnl4YWF1bWhna292d3VvdnpsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzU5MDQ5NTYsImV4cCI6MjA1MTQ4MDk1Nn0.mesbr7DPkdt9Xdq0wa2CNUgfZfDScb2KdX6vvzoUi8I";
+    const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY_HERE";
     const FALLBACK_PHOTO = "https://docs.google.com/drawings/d/e/2PACX-1vT_8sRZLulgLi8vByqho1d1U0dP7d-wvNZ_0TC2zPpfQHk4vPTOZ4HHruVyGxKYAUqEY780Spopi7Cb/pub?w=1440&h=1080";
     const PAGE_SIZE = 10, HIGHLIGHT_MS = 2000, REFRESH_MS = 60000;
 
-    /* ---------- globals ---------- */
     let highlightTimer = null, refreshTimer = null;
     let currentPage = 0, highlightIndex = 0;
 
-    /* ---------- helpers ---------- */
-    function formatTalkTime(sec){const m=Math.floor(sec/60);return`${Math.floor(m/60)}:${(m%60).toString().padStart(2,'0')}`}
-    function formatDateTime(d){return d.toISOString().slice(0,19).replace("T"," ")}
-
-    /* ---------- fetching ---------- */
-    async function fetchCallSummaries(){
-      const now=new Date(),start=new Date(now),end=new Date(now);
-      start.setHours(7,0,0,0);end.setHours(18,0,0,0);
-
-      const body={startTime:formatDateTime(start),endTime:formatDateTime(end),timeZone:"Europe/London",
-        minTalkTime:1,fields:["FirstName","LastName","External_Outbound_Total","Total_Talk_Time","Email"]};
-
-      const res=await fetch(callSummaryUrl,{method:"POST",headers:{'Content-Type':'application/json','Authorization':`Bearer ${SUPABASE_ANON_KEY}`},body:JSON.stringify(body)});
-      const json=await res.json();
-      return Array.isArray(json)?json
-        .filter(o=>o.Email)
-        .map(o=>({name:`${o.FirstName||''} ${o.LastName||''}`.trim(),email:o.Email.toLowerCase(),
-                  dials:+o.External_Outbound_Total,talkTime:Math.round(+o.Total_Talk_Time/1000)}))
-        .filter(r=>r.talkTime>0):[];
+    function formatTalkTime(sec){
+      const m = Math.floor(sec/60);
+      return `${Math.floor(m/60)}:${(m%60).toString().padStart(2,'0')}`;
     }
-
-    async function fetchEmployeeDetails(emails){
-      const payload=[...new Set(emails)];
-      if(!payload.length) return [];
-      const res=await fetch(lookupUrl,{method:"POST",headers:{'Content-Type':'application/json','Authorization':`Bearer ${SUPABASE_ANON_KEY}`},body:JSON.stringify({emails:payload})});
-      const json=await res.json();
-      return Array.isArray(json)?json:[];
-    }
-
-    /* ---------- rendering ---------- */
-    function render(tableData,detailsMap){
-      clearInterval(highlightTimer); // avoid multiples
-      const tbody=document.querySelector("#callSummaryTable tbody");
-      tbody.innerHTML="";
-      const start=currentPage*PAGE_SIZE,end=Math.min(start+PAGE_SIZE,tableData.length);
-      const slice=tableData.slice(start,end);
-      highlightIndex%=slice.length||1;
-      slice.forEach((row,i)=>{
-        const tr=document.createElement("tr");
-        if(i===highlightIndex) tr.classList.add("highlight");
-        tr.innerHTML=`<td>${row.rank}</td><td>${row.name}</td><td>${row.dials}</td><td>${formatTalkTime(row.talkTime)}</td>`;
-        tbody.appendChild(tr);
-      });
-      updateSidebar(slice[highlightIndex],detailsMap[slice[highlightIndex]?.email]);
-      highlightTimer=setInterval(()=>{highlightIndex++;if(highlightIndex>=slice.length){highlightIndex=0;currentPage=(currentPage+1)%Math.ceil(tableData.length/PAGE_SIZE)}render(tableData,detailsMap)},HIGHLIGHT_MS);
-    }
-
-    function updateSidebar(row,detail){
-      if(!row) return;
-      document.getElementById("topPerformerSidebar").style.display="block";
-      document.getElementById("topName").textContent=row.name;
-      document.getElementById("topDials").textContent=row.dials;
-      document.getElementById("topTalkTime").textContent=formatTalkTime(row.talkTime);
-      const img=document.getElementById("topPhoto");
-      const src=detail?.bamboo_photo_url||FALLBACK_PHOTO;
-      if(img.src!==src) img.src=src;
-    }
-
-    /* ---------- main ---------- */
-    async function init(){
-      clearTimeout(refreshTimer);
-      const callRows=await fetchCallSummaries();
-      const details=await fetchEmployeeDetails(callRows.map(r=>r.email));
-      const detailsMap=Object.fromEntries(details.map(d=>[d.work_email.toLowerCase(),d]));
-      const filters=getFiltersFromUrl();
-      const filtered=callRows.filter(r=>{
-        const d=detailsMap[r.email]; // may be undefined
-        if(filters.location && d?.location!==filters.location) return false;
-        if(filters.department){
-          if(filters.department==='Sales'){return /\(.*\)/.test(d?.department||'')}
-          return d?.department?.includes(filters.department)
-        }
-        return true;
-      }).sort((a,b)=>b.talkTime-a.talkTime).map((r,i)=>({...r,rank:i+1}));
-
-      if(!filtered.length){document.getElementById("emptyState").style.display="block";return}
-      currentPage=highlightIndex=0;render(filtered,detailsMap);
-      refreshTimer=setTimeout(init,REFRESH_MS); // auto-refresh in 60 s
+    function formatDateTime(d){
+      return d.toISOString().slice(0,19).replace("T"," ");
     }
 
     function getFiltersFromUrl(){
-      const p=new URLSearchParams(location.search),f={};
-      if(p.has("Sales")) f.department="Sales";
-      if(p.has("Location")) f.location=p.get("Location");
-      if(p.has("Department")) f.department=p.get("Department");
+      const p = new URLSearchParams(location.search);
+      const f = {};
+      if (p.has("Sales"))     f.department = "Sales";
+      if (p.has("Location"))  f.location   = p.get("Location");
+      if (p.has("Department"))f.department = p.get("Department");
+      // new: include=all
+      f.includeAll = p.get("include") === "all";
       return f;
+    }
+
+    async function fetchCallSummaries(includeAll){
+      const now = new Date(), start=new Date(now), end=new Date(now);
+      start.setHours(7,0,0,0); end.setHours(18,0,0,0);
+
+      // if includeAll, minTalkTime = 0, else 1
+      const body = {
+        startTime: formatDateTime(start),
+        endTime:   formatDateTime(end),
+        timeZone:  "Europe/London",
+        minTalkTime: includeAll ? 0 : 1,
+        fields: ["FirstName","LastName","External_Outbound_Total","Total_Talk_Time","Email"]
+      };
+
+      const res = await fetch(callSummaryUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type":"application/json",
+          "Authorization":`Bearer ${SUPABASE_ANON_KEY}`
+        },
+        body: JSON.stringify(body)
+      });
+      const json = await res.json();
+      if (!Array.isArray(json)) return [];
+      return json
+        .filter(o => o.Email)  // always drop blank-email rows
+        .map(o => ({
+          name:  `${o.FirstName||""} ${o.LastName||""}`.trim(),
+          email: o.Email.toLowerCase(),
+          dials: +o.External_Outbound_Total,
+          talkTime: Math.round(+o.Total_Talk_Time/1000)
+        }))
+        // only drop zero-talkTime if NOT includeAll
+        .filter(r => includeAll ? true : r.talkTime > 0);
+    }
+
+    async function fetchEmployeeDetails(emails){
+      const unique = [...new Set(emails)];
+      if (!unique.length) return [];
+      const res = await fetch(lookupUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type":"application/json",
+          "Authorization":`Bearer ${SUPABASE_ANON_KEY}`
+        },
+        body: JSON.stringify({ emails: unique })
+      });
+      const json = await res.json();
+      return Array.isArray(json) ? json : [];
+    }
+
+    function updateSidebar(row, detail){
+      if (!row) return;
+      document.getElementById("topPerformerSidebar").style.display="block";
+      document.getElementById("topName").textContent = row.name;
+      document.getElementById("topDials").textContent = row.dials;
+      document.getElementById("topTalkTime").textContent = formatTalkTime(row.talkTime);
+      const img = document.getElementById("topPhoto");
+      const src = detail?.bamboo_photo_url || FALLBACK_PHOTO;
+      if (img.src !== src) img.src = src;
+    }
+
+    function render(rows, detailsMap){
+      clearInterval(highlightTimer);
+      const tbody = document.querySelector("#callSummaryTable tbody");
+      tbody.innerHTML = "";
+      const start = currentPage * PAGE_SIZE;
+      const slice = rows.slice(start, start + PAGE_SIZE);
+      highlightIndex %= slice.length || 1;
+      slice.forEach((r,i) => {
+        const tr = document.createElement("tr");
+        if (i === highlightIndex) tr.classList.add("highlight");
+        tr.innerHTML = `
+          <td>${r.rank}</td>
+          <td>${r.name}</td>
+          <td>${r.dials}</td>
+          <td>${formatTalkTime(r.talkTime)}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+      updateSidebar(slice[highlightIndex], detailsMap[slice[highlightIndex]?.email]);
+      highlightTimer = setInterval(() => {
+        highlightIndex++;
+        if (highlightIndex >= slice.length) {
+          highlightIndex = 0;
+          currentPage = (currentPage + 1) % Math.ceil(rows.length / PAGE_SIZE);
+        }
+        render(rows, detailsMap);
+      }, HIGHLIGHT_MS);
+    }
+
+    async function init(){
+      clearTimeout(refreshTimer);
+      const filters = getFiltersFromUrl();
+      const callRows = await fetchCallSummaries(filters.includeAll);
+      const details = await fetchEmployeeDetails(callRows.map(r=>r.email));
+      const detailsMap = Object.fromEntries(details.map(d => [d.work_email.toLowerCase(), d]));
+
+      // apply Location/Department filters (Sales shorthand etc.)
+      const filtered = callRows
+        .filter(r => {
+          const d = detailsMap[r.email];
+          if (filters.location && d?.location !== filters.location) return false;
+          if (filters.department) {
+            if (filters.department === "Sales") {
+              return /\(.*\)/.test(d?.department||"");
+            }
+            return d?.department?.includes(filters.department);
+          }
+          return true;
+        })
+        .sort((a,b)=>b.talkTime - a.talkTime)
+        .map((r,i)=>({ ...r, rank: i+1 }));
+
+      if (!filtered.length) {
+        document.getElementById("emptyState").style.display="block";
+      } else {
+        currentPage = highlightIndex = 0;
+        render(filtered, detailsMap);
+      }
+
+      // schedule next refresh
+      refreshTimer = setTimeout(init, REFRESH_MS);
     }
 
     init();
