@@ -93,7 +93,9 @@
 
     .sidebar img {
       border-radius: 12px;
-      max-width: 200px;
+      width: 200px;
+      height: 200px;
+      object-fit: cover;
       margin: 1rem 0;
     }
 
@@ -133,7 +135,7 @@
     </table>
     <div class="sidebar" id="topPerformerSidebar" style="display: none;">
       <h2 id="topName"></h2>
-      <img id="topPhoto" src="" alt="Highlighted Person">
+      <img id="topPhoto" src="" alt="">
       <div class="stat">
         Dials
         <span id="topDials">0</span>
@@ -152,13 +154,17 @@
     const callSummaryUrl = "https://umfyxaaumhgkovwuovzl.supabase.co/functions/v1/8x8-Call-Summaries";
     const lookupUrl = "https://umfyxaaumhgkovwuovzl.supabase.co/functions/v1/8x8-Employee-Join";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVtZnl4YWF1bWhna292d3VvdnpsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzU5MDQ5NTYsImV4cCI6MjA1MTQ4MDk1Nn0.mesbr7DPkdt9Xdq0wa2CNUgfZfDScb2KdX6vvzoUi8I";
-    const FALLBACK_PHOTO = "https://talentia.group/wp-content/uploads/2022/09/cropped-favicon-192x192.png";
+    const FALLBACK_PHOTO = "https://docs.google.com/drawings/d/e/2PACX-1vT_8sRZLulgLi8vByqho1d1U0dP7d-wvNZ_0TC2zPpfQHk4vPTOZ4HHruVyGxKYAUqEY780Spopi7Cb/pub?w=1440&h=1080";
     const PAGE_SIZE = 10;
 
     let data = [];
     let employeeDetails = [];
     let currentPage = 0;
     let highlightIndex = 0;
+    // Preload fallback and keep last good photo per email to avoid flicker/alt text
+    const lastPhotoCache = {};
+    const _preloadFallback = new Image();
+    _preloadFallback.src = FALLBACK_PHOTO;
 
     function getFiltersFromUrl() {
       const params = new URLSearchParams(window.location.search);
@@ -326,10 +332,22 @@
 
       document.getElementById('topName').textContent = row.name || '';
       const img = document.getElementById('topPhoto');
-      img.src = (details && details.bamboo_photo_url) ? details.bamboo_photo_url : FALLBACK_PHOTO;
-      img.onerror = () => { img.src = FALLBACK_PHOTO; };
-
-      document.getElementById('topDials').textContent = String(row.dials ?? 0);
+      img.decoding = 'async';
+      img.loading = 'eager';
+      const key = (row.email || '').toLowerCase();
+      const candidate = details?.bamboo_photo_url || '';
+      const startSrc = lastPhotoCache[key] || FALLBACK_PHOTO;
+      if (img.src !== startSrc) img.src = startSrc;
+      if (candidate && candidate !== startSrc) {
+        const probe = new Image();
+        probe.onload = () => { lastPhotoCache[key] = candidate; img.src = candidate; };
+        probe.onerror = () => { lastPhotoCache[key] = FALLBACK_PHOTO; img.src = FALLBACK_PHOTO; };
+        probe.src = candidate;
+      } else if (!candidate) {
+        lastPhotoCache[key] = FALLBACK_PHOTO;
+        img.src = FALLBACK_PHOTO;
+      }
+      document.getElementById('topDials'.textContent = String(row.dials ?? 0);
       document.getElementById('topTalkTime').textContent = formatTalkTime(row.talkTime ?? 0);
     }
 
