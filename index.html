@@ -15,7 +15,6 @@
       font-family: 'Segoe UI', Tahoma, sans-serif;
       color: #fff;
     }
-
     .title-bar {
       flex: 0 0 auto;
       background: #000d3b;
@@ -27,13 +26,11 @@
       font-size: 2vw;
       text-shadow: 2px 2px 8px #000;
     }
-
     .main-content {
       flex: 1 1 auto;
       display: flex;
       overflow: hidden;
     }
-
     .table-container {
       flex: 7;
       display: flex;
@@ -54,15 +51,21 @@
       background: #001a70;
     }
     thead th {
-      flex: 1;
       padding: 0.5rem;
       color: #f5ed40ff;
       font-weight: 700;
       text-transform: uppercase;
       font-size: 1.2rem;
       text-align: left;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
-    thead th:first-child { flex: 0 0 3rem }
+    /* flex ratios: rank small, name larger, then dials/talk */
+    thead th:nth-child(1) { flex: 0 0 3rem }
+    thead th:nth-child(2) { flex: 3 }
+    thead th:nth-child(3),
+    thead th:nth-child(4) { flex: 1 }
 
     tbody {
       flex: 1 1 auto;
@@ -81,12 +84,17 @@
       font-weight: bold;
     }
     tbody td {
-      flex: 1;
       padding: 0 0.5rem;
       display: flex;
       align-items: center;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
-    tbody td:first-child { flex: 0 0 3rem }
+    tbody td:nth-child(1) { flex: 0 0 3rem }
+    tbody td:nth-child(2) { flex: 3 }
+    tbody td:nth-child(3),
+    tbody td:nth-child(4) { flex: 1 }
 
     .sidebar {
       flex: 3;
@@ -123,12 +131,6 @@
       font-size: 1.4rem;
       color: #f5ed40ff;
     }
-
-    /* Sales view doubling */
-    .sales-view table thead th,
-    .sales-view table tbody td {
-      font-size: 2.6rem !important;
-    }
   </style>
 </head>
 <body>
@@ -163,10 +165,13 @@
   <script>
     const SUMMARY_URL = "https://umfyxaaumhgkovwuovzl.supabase.co/functions/v1/8x8-Call-Summaries";
     const JOIN_URL    = "https://umfyxaaumhgkovwuovzl.supabase.co/functions/v1/8x8-Employee-Join";
-    const KEY         = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFub24iLCJpYXQiOjE3MzU5MDQ5NTYsImV4cCI6MjA1MTQ4MDk1Nn0.mesbr7DPkdt9Xdq0wa2CNUgfZfDScb2KdX6vvzoUi8I";
-    const FALLBACK    = "https://docs.google.com/drawings/d/e/2PACX-1vT_8sRZLulgLi8vByqho1d1U0dP7d-wvNZ_0TC2zPpfQHk4vPTOZ4HHruVyGxKYAUqEY780Spopi7Cb/pub?w=1440&h=1080";
+    const KEY         = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.…<your anon key here>…";
+    const FALLBACK    = "https://docs.google.com/drawings/…/pub?w=1440&h=1080";
 
-    const PAGE_SIZE = 10, HIGHLIGHT_MS = 2000, REFRESH_MS = 60000;
+    const PAGE_SIZE   = 10,
+          HIGHLIGHT_MS = 2000,
+          REFRESH_MS   = 60000;
+
     let highlightTimer, refreshTimer;
     let currentPage = 0, highlightIndex = 0;
 
@@ -178,16 +183,7 @@
       return d.toISOString().slice(0,19).replace("T"," ");
     }
 
-    function getFilters() {
-      const p = new URLSearchParams(location.search), f = {};
-      f.includeAll = (p.get("include")||"").toLowerCase() === "all";
-      f.department = p.has("Sales") ? "Sales" : p.get("Department") || null;
-      f.location   = p.get("Location") || null;
-      document.body.classList.toggle("sales-view", f.department === "Sales");
-      return f;
-    }
-
-    async function fetchSummaries(includeAll) {
+    async function fetchSummaries(includeAll=false) {
       const now = new Date(), s = new Date(now), e = new Date(now);
       s.setHours(7,0,0,0); e.setHours(18,0,0,0);
       const res = await fetch(SUMMARY_URL, {
@@ -197,11 +193,11 @@
           "Authorization": `Bearer ${KEY}`
         },
         body: JSON.stringify({
-          startTime: fmtDate(s),
-          endTime:   fmtDate(e),
-          timeZone:  "Europe/London",
-          minTalkTime: includeAll?0:1,
-          fields:["FirstName","LastName","External_Outbound_Total","Total_Talk_Time","Email"]
+          startTime:  fmtDate(s),
+          endTime:    fmtDate(e),
+          timeZone:   "Europe/London",
+          minTalkTime: includeAll ? 0 : 1,
+          fields:     ["FirstName","LastName","External_Outbound_Total","Total_Talk_Time","Email"]
         })
       });
       const json = await res.json();
@@ -209,12 +205,12 @@
       return json
         .filter(o=>o.Email)
         .map(o=>({
-          name: `${o.FirstName.trim()} ${o.LastName.trim()}`,
+          name: `${o.FirstName||""} ${o.LastName||""}`.trim(),
           email: o.Email.toLowerCase(),
           dials: +o.External_Outbound_Total,
           talkTime: Math.round(+o.Total_Talk_Time/1000)
         }))
-        .filter(r=> includeAll?true:r.talkTime>0);
+        .filter(r=> includeAll ? true : r.talkTime > 0);
     }
 
     async function fetchDetails(emails) {
@@ -237,8 +233,9 @@
       document.getElementById("topPerformerSidebar").style.display = "block";
       document.getElementById("topName").textContent    = row.name;
       document.getElementById("topDials").textContent   = row.dials;
-      document.getElementById("topTalkTime").textContent = fmtTalk(row.talkTime);
-      const img = document.getElementById("topPhoto"), src = detail?.bamboo_photo_url || FALLBACK;
+      document.getElementById("topTalkTime").textContent= fmtTalk(row.talkTime);
+      const img = document.getElementById("topPhoto"),
+            src = detail?.bamboo_photo_url || FALLBACK;
       if (img.src !== src) img.src = src;
     }
 
@@ -246,10 +243,11 @@
       clearInterval(highlightTimer);
       const tbody = document.querySelector("#callSummaryTable tbody");
       tbody.innerHTML = "";
-      const start = currentPage * PAGE_SIZE, slice = rows.slice(start, start + PAGE_SIZE);
+      const start = currentPage * PAGE_SIZE;
+      const slice = rows.slice(start, start + PAGE_SIZE);
       highlightIndex %= slice.length || 1;
 
-      slice.forEach((r,i)=>{
+      slice.forEach((r,i) => {
         const tr = document.createElement("tr");
         if (i === highlightIndex) tr.classList.add("highlight");
         tr.innerHTML = `
@@ -274,30 +272,18 @@
 
     async function init() {
       clearTimeout(refreshTimer);
-      const f = getFilters();
 
-      const callRows = await fetchSummaries(f.includeAll);
+      // Always treat includeAll = false; remove any view logic
+      const callRows = await fetchSummaries(false);
       const details  = await fetchDetails(callRows.map(r=>r.email));
       const map      = Object.fromEntries(details.map(d=>[d.work_email.toLowerCase(), d]));
 
       const filtered = callRows
-        .filter(r=>{
-          const d = map[r.email] || {};
-          if (f.location   && d.location   !== f.location)   return false;
-          if (f.department) {
-            if (f.department==="Sales")
-              return /\(.*\)/.test(d.department||"");
-            return (d.department||"")
-                     .toLowerCase()
-                     .includes(f.department.toLowerCase());
-          }
-          return true;
-        })
-        .sort((a,b)=>b.talkTime - a.talkTime)
-        .map((r,i)=>({...r,rank:i+1}));
+        .sort((a,b)=> b.talkTime - a.talkTime)
+        .map((r,i)=> ({ ...r, rank: i+1 }));
 
-      if (!filtered.length) {
-        document.getElementById("emptyState").style.display="block";
+      if (filtered.length === 0) {
+        document.getElementById("emptyState").style.display = "block";
       } else {
         currentPage = highlightIndex = 0;
         render(filtered, map);
