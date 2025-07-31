@@ -9,8 +9,7 @@
     * { box-sizing: border-box; margin:0; padding:0 }
     html, body { height: 100% }
     body {
-      display: flex;
-      flex-direction: column;
+      display: flex; flex-direction: column;
       background: radial-gradient(#000d3b, #000021);
       font-family: 'Segoe UI', Tahoma, sans-serif;
       color: #fff;
@@ -28,97 +27,65 @@
       margin: 0;
     }
     .main-content {
-      display: flex;
-      padding: 1rem 2rem;
+      display: flex; padding: 1rem 2rem;
       flex: 1 1 auto;
     }
     table {
       width: 70%;
-      border-collapse: collapse;
       font-size: 1.3rem;
       table-layout: fixed;
+      border-collapse: collapse;
       display: flex; flex-direction: column; height: 100%;
     }
-    thead {
-      flex: 0 0 auto;
-    }
-    thead tr {
-      display: flex;
-      background: #001a70;
-    }
+    thead { flex: 0 0 auto }
+    thead tr { display: flex; background: #001a70 }
     thead th {
-      flex: 1;
-      padding: 0 0.5rem;
-      color: #f5ed40ff;
-      font-weight: 700;
-      text-transform: uppercase;
-      font-size: 1.2rem;
-      text-align: left;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
+      flex: 1; padding: 0 0.5rem;
+      color: #f5ed40ff; font-weight: 700;
+      text-transform: uppercase; font-size: 1.2rem;
+      text-align: left; overflow: hidden;
+      white-space: nowrap; text-overflow: ellipsis;
     }
     thead th:first-child { flex: 0 0 3rem }
 
     tbody {
       flex: 1 1 auto;
-      display: flex;
-      flex-direction: column;
+      display: flex; flex-direction: column;
     }
     tbody tr {
-      flex: 1;
-      display: flex;
+      flex: 1; display: flex;
       background: #001245;
       border-bottom: 1px solid #1a1a1a;
     }
     tbody tr.highlight {
-      background: #f5ed40ff;
-      color: #000;
-      font-weight: bold;
+      background: #f5ed40ff; color: #000; font-weight: bold;
     }
     tbody td {
-      flex: 1;
-      padding: 0 0.5rem;
-      display: flex;
-      align-items: center;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
+      flex: 1; padding: 0 0.5rem;
+      display: flex; align-items: center;
+      overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
     }
     tbody td:first-child { flex: 0 0 3rem }
 
     .sidebar {
-      width: 30%;
-      padding-left: 2rem;
-      text-align: center;
+      width: 30%; padding-left: 2rem; text-align: center;
       overflow: hidden;
     }
     .sidebar img {
-      border-radius: 12px;
-      width: 180px; height: 180px;
-      object-fit: cover;
-      margin: 1rem 0;
+      border-radius: 12px; width: 180px; height: 180px;
+      object-fit: cover; margin: 1rem 0;
     }
     .sidebar h2 {
-      font-size: 1.7rem;
-      color: #f5ed40ff;
-      margin-bottom: .5rem;
+      font-size: 1.7rem; color: #f5ed40ff; margin-bottom: .5rem;
     }
     .sidebar .stat {
-      font-size: 1.4rem;
-      margin-top: .5rem;
+      font-size: 1.4rem; margin-top: .5rem;
     }
     .sidebar .stat span {
-      display: block;
-      font-size: 2.5rem;
-      color: #f5ed40ff;
+      display: block; font-size: 2.5rem; color: #f5ed40ff;
     }
-
     .empty-message {
-      text-align: center;
-      margin: 2rem;
-      font-size: 1.4rem;
-      color: #f5ed40ff;
+      text-align: center; margin: 2rem; font-size: 1.4rem; color: #f5ed40ff;
     }
   </style>
 </head>
@@ -145,21 +112,21 @@
   <script>
     const SUMMARY_URL       = "https://umfyxaaumhgkovwuovzl.supabase.co/functions/v1/8x8-Call-Summaries";
     const EMPLOYEE_JOIN_URL = "https://umfyxaaumhgkovwuovzl.supabase.co/functions/v1/8x8-Employee-Join";
-    const KEY               = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVtZnl4YWF1bWhna292d3VvdnpsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzU5MDQ5NTYsImV4cCI6MjA1MTQ4MDk1Nn0.mesbr7DPkdt9Xdq0wa2CNUgfZfDScb2KdX6vvzoUi8I"; 
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVtZnl4YWF1bWhna292d3VvdnpsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzU5MDQ5NTYsImV4cCI6MjA1MTQ4MDk1Nn0.mesbr7DPkdt9Xdq0wa2CNUgfZfDScb2KdX6vvzoUi8I"; 
     const FALLBACK_PHOTO    = "https://docs.google.com/drawings/d/e/2PACX-1vT_8sRZLulgLi8vByqho1d1U0dP7d-wvNZ_0TC2zPpfQHk4vPTOZ4HHruVyGxKYAUqEY780Spopi7Cb/pub?w=1440&h=1080";
 
-    const PAGE_SIZE   = 10,
+    const PAGE_SIZE    = 10,
           HIGHLIGHT_MS = 2000,
           REFRESH_MS   = 60000;
 
-    let currentPage = 0,
+    let currentPage    = 0,
         highlightIndex = 0,
         highlightTimer,
         refreshTimer;
 
     function fmtTalkTime(sec) {
-      const m = Math.floor(sec / 60);
-      return `${Math.floor(m/60)}:${(m % 60).toString().padStart(2,'0')}`;
+      const m = Math.floor(sec/60);
+      return `${Math.floor(m/60)}:${(m%60).toString().padStart(2,'0')}`;
     }
     function fmtDateTime(d) {
       return d.toISOString().slice(0,19).replace("T"," ");
@@ -179,7 +146,7 @@
             start = new Date(now),
             end   = new Date(now);
       start.setHours(7,0,0,0);
-      end.setHours(18,0,0,0);
+      end  .setHours(18,0,0,0);
 
       const body = {
         startTime:   fmtDateTime(start),
@@ -190,10 +157,11 @@
       };
 
       const res  = await fetch(SUMMARY_URL, {
-        method:  "POST",
+        method: "POST",
         headers: {
           "Content-Type":  "application/json",
-          "Authorization": `Bearer ${KEY}`
+          "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+          "apikey":        SUPABASE_ANON_KEY
         },
         body: JSON.stringify(body)
       });
@@ -208,7 +176,6 @@
           dials:    +o.External_Outbound_Total,
           talkTime: Math.round(+o.Total_Talk_Time/1000)
         }))
-        // HERE is the includeAll logic:
         .filter(r => includeAll ? true : r.talkTime > 0);
     }
 
@@ -219,7 +186,8 @@
         method: "POST",
         headers: {
           "Content-Type":  "application/json",
-          "Authorization": `Bearer ${KEY}`
+          "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+          "apikey":        SUPABASE_ANON_KEY
         },
         body: JSON.stringify({ emails: uniq })
       });
@@ -246,7 +214,7 @@
 
       const start = currentPage * PAGE_SIZE;
       const slice = rows.slice(start, start + PAGE_SIZE);
-      highlightIndex %= slice.length || 1;
+      highlightIndex %= slice.length||1;
 
       slice.forEach((r, i) => {
         const tr = document.createElement("tr");
@@ -274,8 +242,7 @@
     async function init() {
       clearTimeout(refreshTimer);
 
-      const filters = getFiltersFromUrl();
-      // pass includeAll flag in here:
+      const filters    = getFiltersFromUrl();
       const callRows   = await fetchCallSummaries(filters.includeAll);
       const detailsArr = await fetchEmployeeDetails(callRows.map(r => r.email));
       const detailsMap = Object.fromEntries(detailsArr.map(d => [ d.work_email.toLowerCase(), d ]));
