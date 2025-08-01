@@ -6,84 +6,84 @@
   <title>Call Time</title>
   <link rel="icon" href="https://talentia.group/wp-content/uploads/2022/09/cropped-favicon-192x192.png"/>
   <style>
-    * { box-sizing:border-box; margin:0; padding:0 }
-    html, body { height:100% }
+    * { box-sizing: border-box; margin:0; padding:0 }
+    html, body { height: 100% }
     body {
-      display:flex; flex-direction:column;
-      background:radial-gradient(#000d3b,#000021);
-      font-family:'Segoe UI',Tahoma,sans-serif;
-      color:#fff;
+      display: flex; flex-direction: column;
+      background: radial-gradient(#000d3b, #000021);
+      font-family: 'Segoe UI', Tahoma, sans-serif; color: #fff;
     }
     .title-bar {
-      flex:0 0 auto;
-      background:#000d3b;
-      padding:.5rem 2rem;
-      border-bottom:2px solid #f5ed40ff;
+      flex: 0 0 auto; background: #000d3b;
+      padding: .5rem 2rem; border-bottom: 2px solid #f5ed40ff;
     }
     .title-bar h1 {
-      font-family:Oxygen-bold,Arial,sans-serif;
-      font-size:2vw;
-      text-shadow:2px 2px 8px #000;
+      font-family: Oxygen-bold, Arial, sans-serif;
+      font-size: 2vw; text-shadow: 2px 2px 8px #000; margin: 0;
     }
     .main-content {
-      display:flex;
-      flex:1 1 auto;
-      overflow:hidden;
+      display: flex; padding: 1rem 2rem; flex: 1 1 auto;
     }
     table {
-      flex:7;
-      border-collapse:collapse;
-      font-size:1.3rem;
-      table-layout:fixed;
-      display:flex; flex-direction:column; height:100%;
+      width: 70%; font-size: 1.3rem; table-layout: fixed;
+      border-collapse: collapse;
+      display: flex; flex-direction: column; height: 100%;
     }
-    thead { flex:0 0 auto }
-    thead tr { display:flex; background:#001a70 }
+    thead { flex: 0 0 auto }
+    thead tr { display: flex; background: #001a70 }
     thead th {
-      flex:1;
-      padding:0 .5rem;
-      color:#f5ed40ff;
-      font-weight:700;
-      text-transform:uppercase;
-      font-size:1.2rem;
-      text-align:left;
-      overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+      flex: 1; padding: 0 .5rem; color: #f5ed40ff;
+      font-weight: 700; text-transform: uppercase;
+      font-size: 1.2rem; text-align: left;
+      overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
     }
-    thead th:first-child { flex:0 0 3rem }
+    thead th:first-child { flex: 0 0 3rem }
+
     tbody {
-      flex:1 1 auto;
-      display:flex; flex-direction:column;
+      flex: 1 1 auto; display: flex; flex-direction: column;
     }
     tbody tr {
-      flex:1;
-      display:flex;
-      background:#001245;
-      border-bottom:1px solid #1a1a1a;
+      flex: 0 0 48px;            /* fixed height */
+      display: flex; 
+      background: #001245;
+      border-bottom: 1px solid #1a1a1a;
+      line-height: 48px;
+    }
+    tbody tr.empty {
+      background: transparent;   /* or same background if you prefer */
+      border-color: transparent;
     }
     tbody tr.highlight {
-      background:#f5ed40ff;
-      color:#000; font-weight:bold;
+      background: #f5ed40ff; color: #000; font-weight: bold;
     }
     tbody td {
-      flex:1;
-      padding:0 .5rem;
-      display:flex; align-items:center;
-      overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
-      height:48px; line-height:48px;
+      flex: 1; padding: 0 .5rem; display: flex;
+      align-items: center; overflow: hidden;
+      white-space: nowrap; text-overflow: ellipsis;
     }
-    tbody td:first-child { flex:0 0 3rem }
+    tbody td:first-child { flex: 0 0 3rem }
+
     .sidebar {
-      flex:3; padding:1rem; text-align:center; overflow:hidden;
+      width: 30%; padding-left: 2rem; text-align: center;
     }
     .sidebar img {
-      border-radius:12px;
-      width:180px; height:180px; object-fit:cover;
-      margin:1rem 0;
+      border-radius: 12px; width: 180px; height: 180px;
+      object-fit: cover; margin: 1rem 0;
     }
-    .sidebar h2 { font-size:1.7rem; color:#f5ed40ff; margin-bottom:.5rem }
-    .sidebar .stat { font-size:1.4rem; margin-top:.5rem }
-    .sidebar .stat span { display:block; font-size:2.5rem; color:#f5ed40ff }
-    .empty-message { text-align:center; margin:2rem; font-size:1.4rem; color:#f5ed40ff }
+    .sidebar h2 {
+      font-size: 1.7rem; color: #f5ed40ff; margin-bottom: .5rem;
+    }
+    .sidebar .stat {
+      font-size: 1.4rem; margin-top: .5rem;
+    }
+    .sidebar .stat span {
+      display: block; font-size: 2.5rem; color: #f5ed40ff;
+    }
+
+    .empty-message {
+      text-align: center; margin: 2rem; font-size: 1.4rem;
+      color: #f5ed40ff;
+    }
   </style>
 </head>
 <body>
@@ -91,7 +91,7 @@
   <div class="main-content">
     <table id="callSummaryTable">
       <thead>
-        <tr><th>Rank</th><th>Name</th><th>Dials</th><th>Talk Time</th></tr>
+        <tr><th></th><th>Name</th><th>Dials</th><th>Talk Time</th></tr>
       </thead>
       <tbody></tbody>
     </table>
@@ -107,149 +107,165 @@
   </div>
 
   <script>
-  const SUMMARY_URL    = "https://umfyxaaumhgkovwuovzl.supabase.co/functions/v1/8x8-Call-Summaries";
-  const JOIN_URL       = "https://umfyxaaumhgkovwuovzl.supabase.co/functions/v1/8x8-Employee-Join";
-  const TREND_URL      = "https://umfyxaaumhgkovwuovzl.supabase.co/functions/v1/8x8-Call-Trend";
-  const KEY            = "https://docs.google.com/drawings/d/e/2PACX-1vT_8sRZLulgLi8vByqho1d1U0dP7d-wvNZ_0TC2zPpfQHk4vPTOZ4HHruVyGxKYAUqEY780Spopi7Cb/pub?w=1440&h=1080";
+    const SUMMARY_URL       = "https://umfyxaaumhgkovwuovzl.supabase.co/functions/v1/8x8-Call-Summaries";
+    const EMPLOYEE_JOIN_URL = "https://umfyxaaumhgkovwuovzl.supabase.co/functions/v1/8x8-Employee-Join";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVtZnl4YWF1bWhna292d3VvdnpsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzU5MDQ5NTYsImV4cCI6MjA1MTQ4MDk1Nn0.mesbr7DPkdt9Xdq0wa2CNUgfZfDScb2KdX6vvzoUi8I";
+    const FALLBACK_PHOTO    = "https://docs.google.com/drawings/d/e/2PACX-1vT_8sRZLulgLi8vByqho1d1U0dP7d-wvNZ_0TC2zPpfQHk4vPTOZ4HHruVyGxKYAUqEY780Spopi7Cb/pub?w=1440&h=1080";
 
-  const PAGE_SIZE = 10, HIGHLIGHT_MS = 2000, REFRESH_MS = 60000;
-  let currentPage = 0, highlightIndex = 0, highlightTimer, refreshTimer;
+    const PAGE_SIZE    = 10,
+          HIGHLIGHT_MS = 2000,
+          REFRESH_MS   = 60000;
 
-  function fmtTalkTime(s) {
-    const m = Math.floor(s/60);
-    return `${Math.floor(m/60)}:${(m%60).toString().padStart(2,'0')}`;
-  }
-  function fmtDateTime(d) {
-    return d.toISOString().slice(0,19).replace("T"," ");
-  }
+    let currentPage    = 0,
+        highlightIndex = 0,
+        highlightTimer,
+        refreshTimer;
 
-  function parseFilters() {
-    const p = new URLSearchParams(location.search), f = {};
-    f.includeAll = (p.get("include")||"").toLowerCase()==="all";
-    if (p.has("Sales"))      f.department="Sales";
-    if (p.has("Location"))   f.location=p.get("Location");
-    if (p.has("Department")) f.department=p.get("Department");
-    return f;
-  }
-
-  async function fetchCallSummaries(includeAll) {
-    const now=new Date(), s=new Date(now), e=new Date(now);
-    s.setHours(7,0,0,0); e.setHours(18,0,0,0);
-    const res = await fetch(SUMMARY_URL,{
-      method:"POST",
-      headers:{
-        "Content-Type":"application/json",
-        "Authorization":`Bearer ${KEY}`
-      },
-      body:JSON.stringify({
-        startTime: fmtDateTime(s),
-        endTime:   fmtDateTime(e),
-        timeZone:  "Europe/London",
-        minTalkTime: includeAll?0:1,
-        fields:["FirstName","LastName","External_Outbound_Total","Total_Talk_Time","Email"]
-      })
-    });
-    const json = await res.json();
-    if(!Array.isArray(json)) return [];
-    return json
-      .filter(o=>o.Email)
-      .map(o=>({
-        name:o.FirstName+" "+o.LastName,
-        email:o.Email.toLowerCase(),
-        dials:+o.External_Outbound_Total,
-        talkTime:Math.round(+o.Total_Talk_Time/1000)
-      }))
-      .filter(r=> includeAll?true:r.talkTime>0);
-  }
-
-  async function fetchEmployeeDetails(emails) {
-    const uniq=[...new Set(emails)];
-    if(!uniq.length) return [];
-    const res = await fetch(JOIN_URL,{
-      method:"POST",
-      headers:{
-        "Content-Type":"application/json",
-        "Authorization":`Bearer ${KEY}`
-      },
-      body:JSON.stringify({ emails:uniq })
-    });
-    const json = await res.json();
-    return Array.isArray(json)?json:[];
-  }
-
-  async function fetchTrend() {
-    const res = await fetch(TREND_URL,{
-      method:"GET",
-      headers:{ "Content-Type":"application/json" }
-    });
-    return res.ok ? await res.json() : { avgDials:0, avgTalkMs:0 };
-  }
-
-  function updateSidebar(row, detail) {
-    if(!row) return;
-    document.getElementById("topPerformerSidebar").style.display="block";
-    document.getElementById("topName").textContent=row.name;
-    document.getElementById("topDials").textContent=row.dials;
-    document.getElementById("topTalkTime").textContent=fmtTalkTime(row.talkTime);
-    const img=document.getElementById("topPhoto"), src=detail?.bamboo_photo_url||FALLBACK_PHOTO;
-    if(img.src!==src) img.src=src;
-  }
-
-  function render(rows, detailMap) {
-    clearInterval(highlightTimer);
-    const tbody=document.querySelector("#callSummaryTable tbody");
-    tbody.innerHTML="";
-    const start=currentPage*PAGE_SIZE, slice=rows.slice(start, start+PAGE_SIZE);
-    highlightIndex%=slice.length||1;
-    slice.forEach((r,i)=>{
-      const tr=document.createElement("tr");
-      if(i===highlightIndex) tr.classList.add("highlight");
-      tr.innerHTML=`<td>${r.rank}</td><td>${r.name}</td><td>${r.dials}</td><td>${fmtTalkTime(r.talkTime)}</td>`;
-      tbody.appendChild(tr);
-    });
-    updateSidebar(slice[highlightIndex], detailMap[slice[highlightIndex]?.email]);
-    highlightTimer=setInterval(()=>{
-      highlightIndex++;
-      if(highlightIndex>=slice.length){
-        highlightIndex=0;
-        currentPage=(currentPage+1)%Math.ceil(rows.length/PAGE_SIZE);
-      }
-      render(rows, detailMap);
-    },HIGHLIGHT_MS);
-  }
-
-  async function init(){
-    clearTimeout(refreshTimer);
-    const f=parseFilters();
-    const [live, trend, detailsArr] = await Promise.all([
-      fetchCallSummaries(f.includeAll),
-      fetchTrend(),
-      fetchEmployeeDetails(await fetchCallSummaries(f.includeAll).then(r=>r.map(x=>x.email)))
-    ]);
-    const historic = {
-      name:"Joe Bloggs",
-      email:"__historic__",
-      dials:trend.avgDials,
-      talkTime:Math.round(trend.avgTalkMs/1000),
-      isHistoric:true
-    };
-    const all = [historic, ...live];
-    all.sort((a,b)=>b.talkTime-a.talkTime);
-    const ranked = all.map((r,i)=>({
-      ...r,
-      rank:r.isHistoric?"—":i+1
-    }));
-    const map = Object.fromEntries(detailsArr.map(d=>[d.work_email.toLowerCase(),d]));
-    if(!ranked.length) {
-      document.getElementById("emptyState").style.display="block";
-    } else {
-      currentPage=highlightIndex=0;
-      render(ranked, map);
+    function fmtTalkTime(sec) {
+      const m = Math.floor(sec/60);
+      return `${Math.floor(m/60)}:${(m%60).toString().padStart(2,'0')}`;
     }
-    refreshTimer = setTimeout(init, REFRESH_MS);
-  }
+    function fmtDateTime(d) {
+      return d.toISOString().slice(0,19).replace("T"," ");
+    }
 
-  init();
+    function getFiltersFromUrl() {
+      const p = new URLSearchParams(location.search), f = {};
+      f.includeAll   = (p.get("include")||"").toLowerCase()==="all";
+      if (p.has("Sales"))      f.department = "Sales";
+      if (p.has("Location"))   f.location   = p.get("Location");
+      if (p.has("Department")) f.department = p.get("Department");
+      return f;
+    }
+
+    async function fetchCallSummaries(includeAll) {
+      const now   = new Date(),
+            start = new Date(now),
+            end   = new Date(now);
+      start.setHours(7,0,0,0); end.setHours(18,0,0,0);
+
+      const body = {
+        startTime:   fmtDateTime(start),
+        endTime:     fmtDateTime(end),
+        timeZone:    "Europe/London",
+        minTalkTime: includeAll ? 0 : 1,
+        fields:      ["FirstName","LastName","External_Outbound_Total","Total_Talk_Time","Email"]
+      };
+
+      const res  = await fetch(SUMMARY_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type":"application/json",
+          "Authorization":`Bearer ${SUPABASE_ANON_KEY}`
+        },
+        body: JSON.stringify(body)
+      });
+      if (res.status===401) throw new Error("Unauthorized");
+      const json = await res.json();
+      if (!Array.isArray(json)) return [];
+
+      return json
+        .filter(o=>o.Email)
+        .map(o=>({
+          name:     `${o.FirstName||""} ${o.LastName||""}`.trim(),
+          email:    o.Email.toLowerCase(),
+          dials:    +o.External_Outbound_Total,
+          talkTime: Math.round(+o.Total_Talk_Time/1000)
+        }))
+        .filter(r=> includeAll ? true : r.talkTime>0);
+    }
+
+    async function fetchEmployeeDetails(emails) {
+      const uniq = [...new Set(emails)];
+      if (!uniq.length) return [];
+      const res = await fetch(EMPLOYEE_JOIN_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type":"application/json",
+          "Authorization":`Bearer ${SUPABASE_ANON_KEY}`
+        },
+        body: JSON.stringify({ emails: uniq })
+      });
+      const json = await res.json();
+      return Array.isArray(json)?json:[];
+    }
+
+    function updateSidebar(row, detail) {
+      if (!row) return;
+      document.getElementById("topPerformerSidebar").style.display="block";
+      document.getElementById("topName").textContent    = row.name;
+      document.getElementById("topDials").textContent   = row.dials;
+      document.getElementById("topTalkTime").textContent= fmtTalkTime(row.talkTime);
+      const img = document.getElementById("topPhoto"),
+            src = detail?.bamboo_photo_url || FALLBACK_PHOTO;
+      if (img.src!==src) img.src = src;
+    }
+
+    function render(rows, map) {
+      clearInterval(highlightTimer);
+      const tbody = document.querySelector("#callSummaryTable tbody");
+      tbody.innerHTML="";
+
+      // slice out exactly PAGE_SIZE rows, pad with empties
+      const slice = rows.slice(currentPage*PAGE_SIZE, (currentPage+1)*PAGE_SIZE);
+      const padCount = PAGE_SIZE - slice.length;
+
+      slice.forEach((r,i)=>{
+        const tr = document.createElement("tr");
+        if (i===highlightIndex) tr.classList.add("highlight");
+        tr.innerHTML=`<td>${r.rank}</td><td>${r.name}</td><td>${r.dials}</td><td>${fmtTalkTime(r.talkTime)}</td>`;
+        tbody.appendChild(tr);
+      });
+      // append blank rows
+      for(let i=0;i<padCount;i++){
+        const tr = document.createElement("tr");
+        tr.classList.add("empty");
+        tr.innerHTML=`<td></td><td></td><td></td><td></td>`;
+        tbody.appendChild(tr);
+      }
+
+      updateSidebar(slice[highlightIndex], map[slice[highlightIndex]?.email]);
+
+      highlightTimer = setInterval(()=>{
+        highlightIndex++;
+        if (highlightIndex>=slice.length){
+          highlightIndex=0;
+          currentPage=(currentPage+1)%Math.ceil(rows.length/PAGE_SIZE);
+        }
+        render(rows,map);
+      }, HIGHLIGHT_MS);
+    }
+
+    async function init(){
+      clearTimeout(refreshTimer);
+      const f        = getFiltersFromUrl();
+      const callRows = await fetchCallSummaries(f.includeAll);
+      const details  = await fetchEmployeeDetails(callRows.map(r=>r.email));
+      const map      = Object.fromEntries(details.map(d=>[d.work_email.toLowerCase(),d]));
+
+      const filtered = callRows
+        .filter(r=>{
+          const d = map[r.email]||{};
+          if(f.location && d.location!==f.location) return false;
+          if(f.department){
+            if(f.department==="Sales") return /\(.+\)/.test(d.department||"");
+            return (d.department||"").toLowerCase().includes(f.department.toLowerCase());
+          }
+          return true;
+        })
+        .sort((a,b)=>b.talkTime-a.talkTime)
+        .map((r,i)=>({...r,rank:i+1}));
+
+      if(!filtered.length){
+        document.getElementById("emptyState").style.display="block";
+      } else {
+        currentPage=highlightIndex=0;
+        render(filtered,map);
+      }
+      refreshTimer = setTimeout(init, REFRESH_MS);
+    }
+
+    init();
   </script>
 </body>
 </html>
